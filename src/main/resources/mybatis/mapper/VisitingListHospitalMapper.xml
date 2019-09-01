@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hospital.dao.VisitListHosp.VisitListHospDao">
+
+    <resultMap id="tzlbVoMap" type="com.hospital.out.hospital.TzlbVo">
+        <result column="JLXH" property="schid"/>
+        <result column="KSRQ" property="begindate"/>
+        <result column="JSRQ" property="enddate"/>
+    </resultMap>
+
+    <resultMap id="mzyykjlxhVoMap" type="com.hospital.out.hospital.MzyykJlxhVo">
+        <result column="jlxh" property="jlxh"/>
+        <result column="yyxh" property="yyxh"/>
+        <result column="xm" property="xm"/>
+    </resultMap>
+
+    <resultMap id="JZlbMap" type="com.hospital.out.hospital.JzlbVo">
+        <result column="yyxh" property="orderid"/>
+        <result column="zt" property="takecode"/>
+        <result column="jzrq" property="visittime"/>
+        <result column="mzrq" property="taketime"/>
+        <!-- <result column="" property="doctime" />
+         <result column="" property="paytime" />
+         <result column="" property="medtime" />
+         <result column="" property="cardtype" />-->
+        <result column="jzkh" property="cardno"/>
+    </resultMap>
+    <select id="findBy" resultMap="tzlbVoMap" parameterType="java.lang.String">
+        select g.JLXH,to_char(g.KSRQ,'yyyyMMdd') ksrq,
+        to_char(g.JSRQ ,'yyyyMMdd') jsrq from GH_MBZHGL g where
+        1=1
+        <if test="schid != null and schid != ''">
+            AND g.JLXH = #{schid}
+        </if>
+        AND g.JSRQ BETWEEN to_date( #{begindate},'yyyy-mm-dd hh24:mi:ss')AND to_date( #{endate},'yyyy-mm-dd hh24:mi:ss')
+    </select>
+
+    <select id="findByOrderId" parameterType="java.lang.String" resultMap="JZlbMap">
+        select distinct a.yyxh,a.zt,
+        to_char(a.djrq,'yyyyMMddhh24miss')mzrq ,to_char(a.yyrq2,'yyyyMMddhh24miss')jzrq,NVL(a.jzkh,c.jzkh) jzkh
+        from gh_mzyyk a
+        left join gh_ghk b on a.jzkh=b.jzkh
+        left join zj_jzxx c on b.jzxh=c.jzxh
+        where
+        1=1
+        <if test="orderid != null and orderid != ''">
+            AND a.yyxh=#{orderid}
+        </if>
+        and a.djrq BETWEEN to_date(#{bdate},'yyyy-MM-dd') and to_date(#{edate},'yyyy-MM-dd')
+    </select>
+
+    <resultMap id="subscribeListVoMap" type="com.hospital.out.hospital.SubscribeListVo">
+        <result property="deptid" column="ksdm"/>
+        <result property="deptname" column="ksmc"/>
+        <result property="docid" column="ysgh"/>
+        <result property="docname" column="ysxm"/>
+        <result property="patid" column="jzkh"/>
+        <result property="patname" column="xm"/>
+        <result property="orderid" column="yyxh"/>
+        <result property="orderState" column="zt"/>
+        <result property="schid" column="pbxh"/>
+        <result property="numid" column="numid"/>
+        <result property="numno" column="ghxh"/>
+        <result property="numdate" column="yyrq1"/>
+        <result property="ampm" column="yysj"/>
+        <result property="visittime" column="jzrq"/>
+        <result property="regfee" column="ghf"/>
+        <result property="treatfee" column="zlf"/>
+        <result property="mobileno" column="lxdh"/>
+        <result property="idcard" column="sfzh"/>
+        <result property="qhmm" column="checkid"/>
+        <result property="paystate" column="jylsh"/>
+        <result property="djrq" column="djrq"/>
+    </resultMap>
+
+    <select id="findJlxh" resultMap="mzyykjlxhVoMap"  parameterType="java.lang.String">
+        select jlxh,yyxh,xm from  GH_MZYYK where sfzh = #{sfzh}
+    </select>
+
+    <update id="updateJlxh" parameterType="java.lang.String">
+        UPDATE GH_MZYYK set jlxh=null where sfzh=#{sfzh} and jlxh=0
+    </update>
+
+    <select id="findAllJlxhBySfzh" resultMap="subscribeListVoMap" parameterType="java.lang.String">
+        select yk.yyxh,yk.lxdh,yk.xm,yk.sfzh,yk.pbxh,yk.ksdm,yk.ysgh,yk.zt,yk.ghxh,
+        yk.checkid,yk.jzkh,
+        zg.xm ysxm,ml.zlf,ml.ghf,ks.ksmc,gh.jylsh,yk.yysj ,yk.yyrq1,yk.yyrq1,yk.numid,
+        to_char(yk.djrq,'yyyy-mm-dd hh24:mi:ss')djrq
+        from  GH_MZYYK yk
+        left join gy_ksdm ks on yk.ksdm = ks.ksdm
+        left join gy_zgxx zg on yk.ysgh = zg.zgid
+        left join gh_mzlbk ml on yk.mzlbxh =ml.mzlbxh
+        left join gh_ghk gh on gh.jlxh = yk.jlxh
+        where yk.sfzh = #{sfzh}  and  yk.yyrq1 > sysdate - 91
+        <if test="zt !=null and  zt !=''">
+            and yk.zt = #{zt}
+        </if>
+        <if test="orderid != null and  orderid !=''">
+            and yk.yyxh = #{orderid}
+        </if>
+    </select>
+
+    <select id="findAllBySfzh" resultMap="subscribeListVoMap" parameterType="java.lang.String">
+        select yk.yyxh,yk.lxdh,yk.xm,yk.sfzh,yk.pbxh,yk.ksdm,yk.ysgh,yk.zt,yk.ghxh,
+        yk.checkid,yk.jzkh,
+        zg.xm ysxm,ml.zlf,ml.ghf,ks.ksmc,gh.jylsh,yk.yysj ,yk.yyrq1,zj.jzrq,yk.yyrq1,yk.numid,
+        to_char(yk.djrq,'yyyy-mm-dd hh24:mi:ss')djrq
+        from  GH_MZYYK yk
+        left join gy_ksdm ks on yk.ksdm = ks.ksdm
+        left join gy_zgxx zg on yk.ysgh = zg.zgid
+        left join gh_mzlbk ml on yk.mzlbxh =ml.mzlbxh
+        left join gh_ghk gh on gh.jlxh = yk.jlxh
+        left join zj_jzxx zj on zj.jlxh =yk.jlxh
+        where yk.sfzh = #{sfzh}  and  yk.yyrq1 > sysdate - 91
+        <if test="zt !=null and  zt !=''">
+            and yk.zt = #{zt}
+        </if>
+       <if test="orderid != null and  orderid !=''">
+          and yk.yyxh = #{orderid}
+       </if>
+    </select>
+</mapper>

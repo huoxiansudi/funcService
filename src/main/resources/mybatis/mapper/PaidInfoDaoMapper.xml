@@ -1,0 +1,498 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hospital.dao.payInfo.PayInfoDao">
+
+    <!-- 待支付列表 -->
+    <resultMap type="com.hospital.out.clinicPayInter.UnpaidVo" id="BaseResultMap">
+        <result column="fygb" property="fygb" />
+        <result column="costdate" property="costdate" />
+        <result column="coststate" property="coststate" />
+        <result column="projecttype" property="projecttype" />
+        <result column="docname" property="docname" />
+        <result column="deptname" property="deptname" />
+        <result column="totalcost" property="totalcost" />
+        <result column="identificationnumber" property="identificationnumber" />
+        <result column="groupnumber" property="groupnumber" />
+        <result column="medicalprescription" property="medicalprescription" />
+        <result column="medcardtype" property="medcardtype" />
+        <result column="medcardno" property="medcardno" />
+        <result column="patientname" property="patientname" />
+        <result column="patientcode" property="patientcode" />
+        <result column="patientnature" property="patientnature" />
+        <result column="patientnaturedes" property="patientnaturedes" />
+    </resultMap>
+
+    <!-- 待支付列表 -->
+      <!--处方-->
+    <select id="getUnpaidInfo" resultMap="BaseResultMap" parameterType="com.hospital.domain.UnpaidInVo">
+
+        SELECT  distinct(c.fygb),
+                b.cfrq as costdate,
+                1 coststate ,
+                (select ylmc from gy_ylsf sf where sf.ylxh=c.fygb ) as projecttype,
+                f_gy_getzgxm(a.jzys) docName,
+                f_gy_getksmc(a.ksdm) deptName,
+                b.cfsb identificationnumber ,
+                1 groupnumber,
+                1 medicalprescription,
+                b.brxm patientname,
+                b.jzkh patientcode,
+                (select xzmc from gy_brxz xz where xz.xzdm=d.brxzdm ) as patientnature,
+                (select brlb from gy_brlb lb where lb.xh=d.brlb ) as patientnaturedes
+        FROM zj_jzxx a, mz_cfk1 b,mz_cfk2 c,gy_brjbxxk d
+        <where>
+            a.jzxh = b.jzxh and a.jzkh = d.jzkh and b.cfsb=c.cfsb
+            and to_char(a.jzrq, 'yyyy-mm-dd') between
+            to_char(sysdate - 1, 'yyyy-mm-dd ') and
+            to_char(sysdate, 'yyyy-mm-dd')
+            and b.sfsb is null
+            <if test="unpaidInVo.patientcode != null">
+                AND  b.jzkh = #{unpaidInVo.patientcode}
+            </if>
+            <if test="unpaidInVo.idcard != null">
+                AND  d.sfzh = #{unpaidInVo.idcard}
+            </if>
+        </where>
+    </select>
+    <!--费用合计-->
+    <select id="getTotalFee" resultMap="BaseResultMap">
+
+        SELECT fygb,cfxh identificationnumber,  nvl(sum(jine), 0) totalcost
+        From wcf_mzcfk  Where  Jzkh = #{jzkh} group by fygb,cfxh
+    </select>
+
+    <!--解锁-->
+    <update id="updateMzcfk1">
+        UPDATE mz_cfk1 SET xgbz=0 WHERE cfsb=#{cfsb} AND xgbz=9
+    </update>
+    <update id="updateMzyjk1">
+        UPDATE yj_yjk1 SET xgbz=0 WHERE yjsb=#{yjsb} AND xgbz=9
+    </update>
+    <!--锁定-->
+    <update id="updateSdMzcfk1">
+        UPDATE mz_cfk1 SET xgbz=9 WHERE cfsb=#{cfsb}
+    </update>
+    <update id="updateSdMzyjk1">
+        UPDATE yj_yjk1 SET xgbz=9 WHERE yjsb=#{yjsb}
+    </update>
+
+    <!--医技-->
+    <select id="getYjInfo" resultMap="BaseResultMap" parameterType="com.hospital.domain.UnpaidInVo">
+        <!--不含皮试-->
+        SELECT
+        distinct(c.fygb),
+        b.kdsj as costdate,
+        1 coststate ,
+        (select ylmc from gy_ylsf sf where sf.ylxh=c.fygb ) as projecttype,
+        f_gy_getzgxm(a.jzys) docName,
+        f_gy_getksmc(a.ksdm) deptName,
+        b.yjsb identificationnumber ,
+        2 groupnumber,
+        2 medicalprescription,
+        b.brxm patientname,
+        b.jzkh patientcode,
+        (select xzmc from gy_brxz xz where xz.xzdm=d.brxzdm ) as patientnature,
+        (select brlb from gy_brlb lb where lb.xh=d.brlb ) as patientnaturedes
+        FROM zj_jzxx a, yj_yjk1 b,yj_yjk2 c,gy_brjbxxk d
+        <where>
+            a.jzxh = b.jzxh
+             /*a.jzkh = b.jzkh and to_char(b.kdsj,'yyyy-mm-dd')=to_char(sysdate,'yyyy-mm-dd')*/
+            and a.jzkh = d.jzkh and b.yjsb=c.yjsb
+            and to_char(a.jzrq, 'yyyy-mm-dd') between
+            to_char(sysdate - 1, 'yyyy-mm-dd ') and
+            to_char(sysdate, 'yyyy-mm-dd')
+            and b.sfsb is null
+            and b.cfsb is null
+            <if test="unpaidInVo.patientcode != null">
+                AND  b.jzkh = #{unpaidInVo.patientcode}
+            </if>
+            <if test="unpaidInVo.idcard != null">
+                AND  d.sfzh = #{unpaidInVo.idcard}
+            </if>
+        </where>
+    </select>
+
+    <!--医技含皮试-->
+    <select id="getYjPsInfo" resultMap="BaseResultMap">
+        SELECT
+        distinct(c.fygb),
+        b.kdsj as costdate,
+        1 coststate ,
+        (select ylmc from gy_ylsf sf where sf.ylxh=c.fygb ) as projecttype,
+        f_gy_getzgxm(B.SJYSGH) docName,
+        f_gy_getksmc(B.SJksdm) deptName,
+        b.yjsb identificationnumber ,
+        2 groupnumber,
+        2 medicalprescription,
+        b.brxm patientname,
+        b.jzkh patientcode,
+        (select xzmc from gy_brxz xz where xz.xzdm=d.brxzdm ) as patientnature,
+        (select brlb from gy_brlb lb where lb.xh=d.brlb ) as patientnaturedes
+        FROM yj_yjk1 b,yj_yjk2 c,gy_brjbxxk d
+        WHERE   to_char(b.kdsj,'yyyy-mm-dd')=to_char(sysdate,'yyyy-mm-dd')
+        and b.yjsb=c.yjsb
+        AND B.JZKH = D.JZKH
+        and b.sfsb is null
+        AND b.cfsb=#{cfsb}
+    </select>
+
+    <!--费用合计-->
+    <select id="getYjFee" resultMap="BaseResultMap">
+        SELECT fygb,yjsb identificationnumber,  nvl(sum(jine), 0) totalcost
+        From wcf_mzyjk  Where Jzkh = #{jzkh} group by fygb,yjsb
+    </select>
+
+
+    <!--支付详情-->
+    <!--处方-->
+    <select id="getPaidBasicInfo" resultType="com.hospital.out.clinicPayInter.CostVo" parameterType="com.hospital.domain.PaidDetailInVo">
+       select  '处方费用' costname,
+        f_gy_getzgxm(a.jzys) docName,
+        f_gy_getksmc(a.ksdm) deptName,
+        (select nvl(sum(dj * sl), 0) From wcf_mzcfk d Where d.Cfxh = b.cfsb) totalcost
+       from zj_jzxx a, mz_cfk1 b,mz_cfk2 c
+       where a.jzxh = b.jzxh and b.cfsb=c.cfsb
+      and to_char(a.jzrq, 'yyyy-mm-dd') between
+       to_char(sysdate - 1, 'yyyy-mm-dd') and
+       to_char(sysdate, 'yyyy-mm-dd')
+   and b.cfsb = #{paidDetailInVo.identificationnumber}
+   and b.sfsb is null and rownum=1
+    </select>
+
+    <select id="getPaidDetailInfo" resultType="com.hospital.out.clinicPayInter.PaidDetailVo" parameterType="com.hospital.domain.PaidDetailInVo">
+        select  ypmc costname ,
+        sl itemnumber ,
+        dj price ,
+        jine amount ,
+        ypbzdw unit ,
+        cfts plasters
+        From wcf_mzcfk
+        Where cfxh=#{paidDetailInVo.identificationnumber}
+    </select>
+    <!--医技-->
+    <select id="getPaidBasicYjInfo" resultType="com.hospital.out.clinicPayInter.CostVo" parameterType="com.hospital.domain.PaidDetailInVo">
+        select  '医技费用' costname,
+        f_gy_getzgxm(a.jzys) docName,
+        f_gy_getksmc(a.ksdm) deptName,
+        (select nvl(sum(dj * sl), 0) From wcf_mzyjk d Where d.yjsb = b.yjsb) totalcost
+        from zj_jzxx a, yj_yjk1 b,yj_yjk2 c
+        where a.jzkh = b.jzkh and to_char(b.kdsj,'yyyy-mm-dd')=to_char(sysdate,'yyyy-mm-dd')
+        and  b.yjsb=c.yjsb
+        and to_char(a.jzrq, 'yyyy-mm-dd') between
+        to_char(sysdate - 1, 'yyyy-mm-dd') and
+        to_char(sysdate, 'yyyy-mm-dd')
+        and b.yjsb  = #{paidDetailInVo.identificationnumber}
+        and b.sfsb is null and rownum=1
+    </select>
+
+    <select id="getPaidDetailYjInfo" resultType="com.hospital.out.clinicPayInter.PaidDetailVo" parameterType="com.hospital.domain.PaidDetailInVo">
+        select  ylmc costname ,
+        sl itemnumber ,
+        dj price ,
+        jine amount ,
+        yldw unit
+        From wcf_mzyjk
+        Where Yjsb=#{paidDetailInVo.identificationnumber}
+    </select>
+
+    <!--处方-->
+    <select id="preSettleInfo" resultType="java.lang.Double" >
+        select nvl(sum(dj * sl), 0) totalcost
+          From wcf_mzcfk d
+         Where d.cfxh=#{sbxh}
+    </select>
+    <!--医技-->
+    <select id="preSettleYjInfo" resultType="java.lang.Double" >
+        select nvl(sum(dj * sl), 0) totalcost
+        From wcf_mzyjk d
+        Where d.yjsb=#{sbxh}
+    </select>
+    <!--发票号码-->
+    <select id="getFphm" resultType="java.lang.String" >
+        SELECT dqhm
+        FROM MZ_PJGL
+        WHERE SKGH ='AUTO8'
+    </select>
+
+
+    <!-- 支付确认 -->
+
+    <update id="updateXhb">
+        UPDATE gy_xhb set dqz=dqz+1 where bm='MZ_MZSFK1'
+    </update>
+
+    <select id="selectXhb" resultType="java.lang.Integer">
+        select DQZ from gy_xhb where bm='MZ_MZSFK1'
+    </select>
+
+    <!--诊间支付预结算-->
+
+    <select id="getCfs" resultType="java.lang.Integer">
+        select count(*) from mz_cfk1 where jzkh=#{jzkh}
+        and to_char(cfrq, 'yyyy-mm-dd') between
+            to_char(sysdate-1, 'yyyy-mm-dd ')  and
+            to_char(sysdate, 'yyyy-mm-dd')
+            and sfsb is null
+    </select>
+
+    <select id="getYjs" resultType="java.lang.Integer">
+        select count(*) from yj_yjk1 where jzkh=#{jzkh}
+        and to_char(kdsj, 'yyyy-mm-dd') between
+        to_char(sysdate-1, 'yyyy-mm-dd ')  and
+        to_char(sysdate, 'yyyy-mm-dd')
+        and sfsb is null
+    </select>
+
+    <select id="getModifyCf" resultType="java.lang.Integer">
+        select count(*) from mz_cfk1 where cfsb=#{cfsb}
+    </select>
+
+    <select id="getPs" resultType="java.lang.Integer">
+        select count(*) from mz_cfk2 where cfsb=#{cfsb}
+        and ( ( substr ( bz , 2 , 1 ) in ( '1' ) ) or substr ( bz , 3 , 1 ) ='1' )
+    </select>
+
+    <select id="getModifyYj" resultType="java.lang.Integer">
+        select count(*) from yj_yjk1 where yjsb=#{yjsb}
+    </select>
+
+    <select id="getCfTotalfee" resultType="java.lang.Double" >
+        select nvl(sum(jine), 0) totalfee
+        From wcf_mzcfk
+        Where jzkh=#{jzkh}
+    </select>
+
+    <select id="getYjTotalfee" resultType="java.lang.Double" >
+        select nvl(sum(jine), 0) totalfee
+        From wcf_mzyjk
+        Where jzkh=#{jzkh}
+    </select>
+
+    <select id="getJzxx" resultType="java.lang.String" >
+        select xm
+        From gy_brjbxxk
+        Where jzkh=#{jzkh}
+    </select>
+
+    <insert id="insertMzsfk1" parameterType="com.hospital.domain.PayConfirmInVo">
+        INSERT INTO MZ_MZSFK1
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            sfsb,fphm,sfrq,jzkh,brxm,brlb,brxzdm,
+            qtsffs,qtsfje,czgh,WX_PAYMODE,
+            wx_agtordernumber,wx_payamount,
+            wx_notify,wx_identificationNumbers,xj,zpje,yjje
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{payConfirmInVo.sfsb},#{payConfirmInVo.fphm},sysdate,
+            #{payConfirmInVo.jzkh},#{payConfirmInVo.brxm},1,1,#{payConfirmInVo.paymode},
+            #{payConfirmInVo.sxj},#{payConfirmInVo.czgh},#{payConfirmInVo.paymode},
+            #{payConfirmInVo.agtordernumber},#{payConfirmInVo.payamount},#{payConfirmInVo.notify},
+            #{payConfirmInVo.identificationNumbers},0,0,0
+        </trim>
+    </insert>
+
+    <!--处方-->
+    <select id="getCfsf" resultType="com.hospital.out.clinicPayInter.MzsfVo" >
+        select fygb as sfxm,
+              nvl(sum(dj * sl), 0) zfje
+        From wcf_mzcfk
+        Where cfxh=#{sbxh} group by fygb
+    </select>
+    <!--医技-->
+    <select id="getYjsf" resultType="com.hospital.out.clinicPayInter.MzsfVo" >
+        select fygb as sfxm,
+              nvl(sum(dj * sl), 0) zfje
+        From wcf_mzyjk
+        Where yjsb=#{sbxh} group by fygb
+    </select>
+
+    <select id="selectMzSfk" resultType="com.hospital.out.clinicPayInter.MzsfVo" >
+        select sfsb,sfxm,zfje
+        From MZ_MZSFK2
+        Where sfsb=#{mzsfVo.sfsb} and sfxm=#{mzsfVo.sfxm}
+    </select>
+
+    <insert id="insertMzsfk2" parameterType="com.hospital.out.clinicPayInter.MzsfVo">
+        INSERT INTO MZ_MZSFK2
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            sfsb,
+            sfxm,
+            zfje,
+            fyhj
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{mzsfVo.sfsb},#{mzsfVo.sfxm},#{mzsfVo.zfje},#{mzsfVo.zfje}
+        </trim>
+    </insert>
+
+    <update id="updateMzsfk2" parameterType="com.hospital.out.clinicPayInter.MzsfVo">
+        UPDATE MZ_MZSFK2 SET zfje=#{mzsfVo.zfje},fyhj=#{mzsfVo.zfje}
+        WHERE sfsb=#{mzsfVo.sfsb} and sfxm=#{mzsfVo.sfxm}
+    </update>
+
+    <select id="selectFybh" resultType="java.lang.Integer" >
+        select nvl(fybh,0)
+        From mz_cfk1
+        Where cfsb=#{sbxh}
+    </select>
+
+    <update id="updateCfk1">
+        UPDATE mz_cfk1 SET sfsb=#{sfsb},jzyf=#{jzyf} WHERE cfsb=#{sbxh}
+    </update>
+    <update id="updateCfk2">
+        Update Mz_Cfk2 Set Ybzfbl =1, Zfbl = 1, Brxz = 1 Where Cfsb = #{sbxh}
+    </update>
+
+    <update id="updateYjk1">
+        UPDATE yj_yjk1 SET sfsb=#{sfsb} WHERE yjsb=#{sbxh}
+    </update>
+    <update id="updateYjk2">
+        UPDATE yj_yjk2 SET  ybzfbl = 1, Zfbl = 1, Brxz = 1  WHERE yjsb=#{sbxh}
+    </update>
+
+    <update id="updateYjsqd">
+        UPDATE Gy_Yxsqd SET Sfsb=#{sfsb}, Sfsj = SysDate
+        Where Id in (select YXSQDID from yj_yjk1 where yjsb=#{sbxh} and  nvl(YXSQDID,0)>0)
+    </update>
+
+    <select id="getDqhm" resultType="java.lang.String">
+        SELECT dqhm FROM mz_pjgl where skgh=#{czgh}
+    </select>
+
+    <update id="updateFphm">
+        update mz_pjgl set dqhm= lpad(dqhm+1,10,'0') where skgh=#{czgh}
+    </update>
+
+
+    <!-- 已支付列表 -->
+    <select id="getPayInfo" parameterType="com.hospital.domain.PayListInVo" resultType="com.hospital.out.clinicPayInter.PayListVo">
+        select
+        a.fphm invoicenumber,
+        '门诊收费' costname,
+        (nvl(a.xj,0)+a.qtsfje+nvl(a.YBZJE,0)) totalcost,
+        a.sfrq costdate,
+        a.wx_paymode cashierclerk,
+        a.brxm patientname,
+        0 executionstatus,
+         a.jzkh
+        from
+        mz_mzsfk1 a,gy_brjbxxk b
+        where
+        a.jzkh = b.jzkh and to_char(a.sfrq, 'yyyy-mm-dd') between
+            to_char(sysdate - 91, 'yyyy-mm-dd ') and
+            to_char(sysdate, 'yyyy-mm-dd')
+        and b.sfzh=#{payListInVo.idcard}
+        <if test="payListInVo.patientcode != null">
+            AND  a.jzkh = #{payListInVo.patientcode}
+        </if>
+    </select>
+
+    <!--3.6.1.6.已支付费用列表-->
+    <!--处方-->
+    <select id="getPaidInfo" resultType="com.hospital.out.clinicPayInter.PaidVo">
+
+        SELECT  distinct(c.fygb),
+        b.sfsb,
+        b.cfrq as costdate,
+        (select ylmc from gy_ylsf sf where sf.ylxh=c.fygb ) as projecttype,
+        f_gy_getksmc(b.ksdm) deptName,
+        b.cfsb identificationnumber ,
+        1 groupnumber,
+        1 medicalprescription,
+        b.brxm patientname,
+        b.jzkh patientcode
+        FROM  mz_cfk1 b,mz_cfk2 c,Mz_Mzsfk1 d WHERE
+        d.sfsb=b.sfsb and b.cfsb=c.cfsb AND d.zfgh is null
+        AND d.fphm=#{invoicenumber}
+        AND b.jzkh = #{patientcode}
+    </select>
+    <!--费用合计-->
+    <select id="getPaidTotalFee" resultType="com.hospital.out.clinicPayInter.PaidVo">
+
+        SELECT a.cfsb identificationnumber,b.Fygb,NVL(SUM(b.dj*b.sl),0) totalcost From Mz_Cfk1 a, Mz_Cfk2 b
+        Where a.Cfsb = b.Cfsb and a.jzkh=#{jzkh} AND a.sfsb=#{sbxh} group by a.cfsb, b.fygb
+
+    </select>
+
+    <!--医技-->
+    <select id="getYjPaidInfo" resultType="com.hospital.out.clinicPayInter.PaidVo">
+
+        SELECT  distinct(c.fygb),
+        b.sfsb,
+        b.kdsj as costdate,
+        (select ylmc from gy_ylsf sf where sf.ylxh=c.fygb ) as projecttype,
+        f_gy_getksmc(b.sjksdm) deptName,
+        b.yjsb identificationnumber ,
+        2 groupnumber,
+        2 medicalprescription,
+        b.brxm patientname,
+        b.jzkh patientcode
+        FROM  yj_yjk1 b,yj_yjk2 c,Mz_Mzsfk1 d WHERE
+        d.sfsb=b.sfsb and b.yjsb=c.yjsb AND d.zfgh is null
+        AND d.fphm=#{invoicenumber}
+        AND b.jzkh = #{patientcode}
+
+    </select>
+    <!--费用合计-->
+    <select id="getPaidYjFee" resultType="com.hospital.out.clinicPayInter.PaidVo">
+
+        SELECT a.yjsb identificationnumber,b.Fygb,NVL(SUM(b.dj*b.sl),0) totalcost From yj_yjk1 a, yj_yjk2 b
+        Where a.yjsb = b.yjsb and a.jzkh=#{jzkh} AND a.sfsb=#{sbxh} group by a.yjsb, b.fygb
+
+    </select>
+
+    <!--已支付详情-->
+    <!--处方-->
+    <select id="getPaidBasicInfo2" resultType="com.hospital.out.clinicPayInter.CostVo" parameterType="com.hospital.domain.PaidDetailInVo">
+        select  '处方费用' costname,
+        f_gy_getzgxm(a.jzys) docName,
+        f_gy_getksmc(a.ksdm) deptName,
+         (select nvl(sum(dj * sl), 0) From YSF_MZCFK d Where d.Cfxh = b.cfsb)  totalcost
+        from zj_jzxx a, mz_cfk1 b,mz_cfk2 c
+        where a.jzxh = b.jzxh and b.cfsb=c.cfsb
+        and to_char(a.jzrq, 'yyyy-mm-dd') between
+            to_char(sysdate - 91, 'yyyy-mm-dd ') and
+            to_char(sysdate, 'yyyy-mm-dd')
+        and b.cfsb = #{paidDetailInVo.identificationnumber}
+        and b.sfsb is not null and rownum=1
+    </select>
+
+    <select id="getPaidDetailInfo2" resultType="com.hospital.out.clinicPayInter.PaidDetailVo" parameterType="com.hospital.domain.PaidDetailInVo">
+        SELECT   c.ypmc costname,
+                 Nvl(b.Sl, 0) itemnumber,
+                 Round(b.Dj, 4) price,
+                 b.dj*b.sl amount,
+                 c.ypzxdw unit,
+                 a.Cfts plasters
+        From    Mz_Cfk1 a, Mz_Cfk2 b, gy_ypmcggzd c
+        Where   a.Cfsb = b.Cfsb and b.ypxh = c.ypxh and a.cfsb=#{paidDetailInVo.identificationnumber}
+    </select>
+    <!--医技-->
+    <select id="getPaidBasicYjInfo2" resultType="com.hospital.out.clinicPayInter.CostVo" parameterType="com.hospital.domain.PaidDetailInVo">
+        select  '医技费用' costname,
+        f_gy_getzgxm(a.jzys) docName,
+        f_gy_getksmc(a.ksdm) deptName,
+        (select nvl(sum(dj * sl), 0) From ysf_mzyjk d Where d.yjsb = b.yjsb)  totalcost
+        from zj_jzxx a, yj_yjk1 b,yj_yjk2 c
+        where a.jzxh = b.jzxh and  b.yjsb=c.yjsb
+        and to_char(a.jzrq, 'yyyy-mm-dd') between
+            to_char(sysdate - 91, 'yyyy-mm-dd ') and
+            to_char(sysdate, 'yyyy-mm-dd')
+        and b.yjsb  = #{paidDetailInVo.identificationnumber} and c.fygb = #{paidDetailInVo.fygb}
+        and b.sfsb is not null and rownum=1
+    </select>
+
+    <select id="getPaidDetailYjInfo2" resultType="com.hospital.out.clinicPayInter.PaidDetailVo" parameterType="com.hospital.domain.PaidDetailInVo">
+        select  c.ylmc costname ,
+        b.Sl itemnumber ,
+        b.dj price ,
+        b.dj*b.sl amount ,
+        c.dw unit
+        From Yj_Yjk1 a, Yj_Yjk2 b,gy_ylsf c
+        Where a.Yjsb = b.Yjsb AND b.ylxh=c.ylxh AND a.Yjsb=#{paidDetailInVo.identificationnumber}
+        and b.fygb = #{paidDetailInVo.fygb}
+    </select>
+
+</mapper>

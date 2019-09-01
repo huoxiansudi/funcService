@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hospital.dao.commonDao.NumidDao">
+
+    <!-- 号源查询 -->
+    <select id="getNumid" resultType="com.hospital.out.hospital.PbHyVo" parameterType="com.hospital.domain.YyghInVo">
+
+        SELECT    t.yingxiangid, t.jianchasj,t.jianchajg,
+                  g.jcsj,z.brxm,z.nl,z.brxb,g.jzkh,
+                  t.jiancharen, t.baogaorq ,t.baogaoren,
+                  z.jzys,z.ksdm,d.ksmc,NVL(x.xinagmumc,g.yzmc) ycmc,
+                  NVL(x.xuhao,g.yzbh) ycbh
+                  from gh_yypbmx
+    </select>
+
+
+    <select id="findTodayPBBH" resultType="java.lang.String">
+      select jlxh from GH_SCHEDUL group by jlxh
+    </select>
+
+    <select id="findYyPBBH" resultType="java.lang.String" parameterType="java.lang.String">
+    select mzyy.pbxh from GH_MZYYK mzyy where to_char(mzyy.yyrq1,'yyyy-mm-dd') = #{yyToday}
+    </select>
+    <update id="updateYybz" parameterType="java.lang.String">
+        update GH_YYPBMX
+        SET yybz = 0
+        where yybz = 1 and
+        pbjlxh = #{pbjx}
+    </update>
+    <select id="getWeekEndParameter" resultType="com.hospital.domain.WeekEndVo">
+    select CSMC ,CSZ2  from gy_xtcs where csmc IN ('SAT','SUN') and xtxh = 23
+    </select>
+
+    <select id="getMzlbGHF" resultType="java.lang.String" parameterType="java.lang.String">
+        select zlf from gh_mzlbk where mzlbxh = #{mzlb}
+    </select>
+    <select id="getMzlbGHFet" resultType="java.lang.String" parameterType="java.lang.String">
+        select zlf_et from gh_mzlbk where mzlbxh = #{mzlb}
+    </select>
+    <select id="getHolidays" resultType="java.lang.String">
+        select rq from gh_jjr
+    </select>
+
+    <select id="getETksdm" resultType="java.lang.String">
+        select ksdm from gy_ksdm m where m.jiagelb =3
+    </select>
+</mapper>

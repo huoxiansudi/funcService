@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hospital.dao.inspect.AssayInfoDao">
+
+    <resultMap type="com.hospital.out.inspectInter.AssayVo" id="BaseResultMap">
+        <result column="LABORDER" property="assayno" />
+        <result column="PATIENTID" property="medcardno" />
+        <result column="icd" property="assaycode" />
+        <result column="name" property="assayname" />
+        <result column="jzrq" property="assaydate" />
+        <result column="brxm" property="name" />
+        <result column="brxb" property="sex" />
+      <!--  <result column="nl" property="age" />-->
+        <result column="ksmc" property="deptname" />
+
+        <result column="RECEIVETIME" property="collectiondate" />
+        <result column="CHECKTIME" property="checkdate" />
+        <result column="SAMPLENO" property="assayitemno" />
+        <result column="EXAMINAIM" property="assayitemname" />
+        <result column="xm" property="sjdocname" />
+        <result column="RECEIVER" property="inspectdocname" />
+        <result column="CHECKOPERATOR" property="checkdocname" />
+    </resultMap>
+
+    <resultMap type="com.hospital.out.inspectInter.AssDetailVo" id="BaseResultMap2">
+        <result column="DOCTADVISENO" property="assayno" />
+        <result column="TESTID" property="assayitemcode" />
+        <result column="CHINESENAME" property="assayitemname" />
+        <result column="unit" property="unit" />
+        <result column="TESTRESULT" property="result" />
+        <result column="RESULTFLAG" property="resultstate" />
+        <result column="refrange" property="refrange" />
+    </resultMap>
+
+    <resultMap id="PatientVoMap" type="com.hospital.out.hospital.PatientVo">
+        <result column="jzkh" property="patid"/>
+        <result column="xm" property="patname"/>
+        <result column="xb" property="patsex"/>
+        <result column="sfzh" property="idcard"/>
+        <result column="khlx" property="medcardtype"/>
+        <result column="ybkh" property="medcardno"/>
+        <result column="lxdh" property="mobileno"/>
+        <result column="jtzz" property="address"/>
+        <result column="jzcs" property="jzcs"/>
+        <result column="brlb" property="brlb"/>
+        <result column="brxzdm" property="brxzdm"/>
+    </resultMap>
+
+    <resultMap id="resultInspectVo" type="com.hospital.out.inspectInter.InspectVo">
+        <result column="YINGXIANGID"  property="inspectno" />
+        <result column="JIANCHAZT"    property="inspecttate" />
+        <result column="ycbh"         property="inspectitemno"/>
+        <result column="ycmc"         property="inspectitemname"/>
+        <result column="JIANCHASJ"    property="inspectdes" />
+        <result column="JIANCHAJG"    property="inspectresult" />
+        <result column="JCSJ"         property="inspectdate" />
+        <result column="BRXM"         property="name" />
+        <result column="BRXB"         property="sex" />
+        <result column="NL"           property="age" />
+        <result column="JZKH"         property="medcardno" />
+        <result column="KSDM"         property="sjdeptid" />
+        <result column="KSMC"         property="sjdeptname" />
+        <result column="jzys"         property="sjdocid" />
+        <result column="JIANCHAREN"   property="sjdocname" />
+        <result column="BAOGAOREN"    property="checkdocname" />
+        <result column="BAOGAORQ"     property="checkdate" />
+    </resultMap>
+    <!--检查列表查询 -->
+    <select id="getInspectVo" resultMap="resultInspectVo" parameterType="com.hospital.domain.InspectInVo">
+
+        SELECT    t.yingxiangid,
+                  '' JIANCHAZT,
+        NVL(x.xuhao,g.yzbh) ycbh,
+        NVL(x.xinagmumc,g.yzmc) ycmc,
+        t.jianchasj,
+        t.jianchajg,
+        g.jcsj,z.brxm,z.nl,z.brxb,g.jzkh,
+        z.ksdm,d.ksmc,
+        z.jzys,t.jiancharen, t.baogaoren,t.baogaorq
+                  from jc_jianchabg t left join gy_yxsqd g on t.shenqingdh =to_char(g.id)
+                 left join zj_jzxx z on  z.jzxh= g.jzxh
+                 left join gy_ksdm d on d.ksdm =z.ksdm
+                 left join gy_brjbxxk k on k.jzkh = g.jzkh
+                 left join JC_SHENQINGDMX x on x.xuhao = g.sqdh
+                 <where>
+                     1=1
+                     <if test="inspectInVo.medcardno != null">
+                        AND g.jzkh = #{inspectInVo.medcardno}
+                     </if>
+                     <if test="inspectInVo.idcard != null">
+                         AND k.sfzh = #{inspectInVo.idcard}
+                     </if>
+                     <if test="inspectInVo.bdate != null">
+                         AND  g.jcsj &gt;  #{inspectInVo.bdate}
+                     </if>
+                     <if test="inspectInVo.edate != null">
+                         AND  g.jcsj &lt; #{inspectInVo.edate}
+                     </if>
+                 </where>
+    </select>
+
+    <!--通过身份证查询就诊卡号 -->
+    <select id="getMedcardno" resultMap="PatientVoMap" parameterType="com.hospital.domain.InspectInVo">
+        select jzkh,xm,xb,sfzh,khlx,ybkh,lxdh from gy_brjbxxk where
+        sfzh= #{inspectInVo.idcard}
+    </select>
+
+    <!--病理列表查询 sqlserver -->
+    <select id="getInspectVo_sqlServer" resultMap="resultInspectVo" parameterType="com.hospital.domain.InspectInVo">
+
+        SELECT   e.EXAMINEID yingxiangid,
+        e.state JIANCHAZT,
+        e.EXAMINEITEM ycmc,
+        e.EXAMINEBODYPART jianchasj,
+        e.IMAGEDIAGNOSIS jianchajg,
+        e.PERFORMTIME jcsj, e.PATIENTNAME brxm,e.PatientAge nl,brxb = CASE e.PatientSex WHEN '男' THEN '1' WHEN '女' THEN '2' ELSE '不确定' END,e.CARDNO jzkh,
+        '' ksdm,e.REQOFFICE ksmc,
+        '' jzys,e.REQDOCTOR jiancharen,e.AUDITDOCTOR baogaoren,e.REPORTTIME baogaorq
+                 from ExamineInfoView e
+        <where>
+            AND e.AUDITTIME is not NULL
+            <if test="inspectInVo.medcardno != null">
+                AND e.CARDNO = #{inspectInVo.medcardno}
+            </if>
+            <if test="inspectInVo.bdate != null">
+                AND  e.PERFORMTIME &gt;  #{inspectInVo.bdate}
+            </if>
+            <if test="inspectInVo.edate != null">
+                AND  e.PERFORMTIME &lt; #{inspectInVo.edate}
+            </if>
+        </where>
+    </select>
+
+    <!--检验列表查询-->
+    <select id="getAssayInfo" resultMap="BaseResultMap" parameterType="com.hospital.domain.AssayInVo">
+        SELECT
+        f.SAMPLENO LABORDER,
+        f.PATIENTID,
+        f.DIAGNOSTIC name,
+        f.REQUESTTIME jzrq,
+        e.sfzh,
+        f.PATIENTNAME brxm,
+        f.sex brxb,
+        d.ksmc,
+
+        f.SAMPLENO,
+        f.EXAMINAIM,
+        f.RECEIVETIME,
+        f.CHECKTIME,
+        g.xm,
+        f.RECEIVER,
+        f.CHECKOPERATOR
+        FROM
+        gy_ksdm d,
+        gy_brjbxxk e,
+        l_patientinfo f,
+        gy_zgxx g
+        <where>
+            AND d.ksdm = f.SECTION
+            AND f.PATIENTID=e.jzkh
+            AND g.zgid=f.REQUESTER
+            AND f.REQUESTTIME is not NULL
+            <if test="medcardno != null">
+                AND f.patientid=#{medcardno}
+            </if>
+            <if test="idcard != null">
+                AND e.sfzh = #{idcard}
+            </if>
+            <if test="bdate != null">
+                AND  f.REQUESTTIME &gt;  #{bdate}
+            </if>
+            <if test="edate != null">
+                AND  f.REQUESTTIME &lt; #{edate}
+            </if>
+        </where>
+    </select>
+
+    <!-- 检验详情查询 -->
+    <select id="getAssDetailInfo" resultMap="BaseResultMap2">
+        select
+            a.DOCTADVISENO,
+            b.TESTID,
+            c.CHINESENAME,
+            c.UNIT,
+            b.TESTRESULT,
+            b.REFLO ||'~'||b.REFHI refrange,
+            b.RESULTFLAG
+        from
+            l_patientinfo a,
+            l_Testresult b,
+            l_testdescribe c
+        where
+        a.SAMPLENO=b.SAMPLENO and  b.TESTID=c.TESTID
+        and a.resultstatus > 3
+        <if test="assayno != null">
+            AND  a.SAMPLENO=#{assayno}
+        </if>
+    </select>
+
+
+
+</mapper>

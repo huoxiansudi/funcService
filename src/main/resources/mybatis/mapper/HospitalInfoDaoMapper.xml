@@ -1,0 +1,696 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hospital.dao.HospitalInfo.HospitalInfoDao">
+
+    <resultMap type="com.hospital.out.hospital.HospitalVo" id="BaseResultMap">
+        <id column="YLJGDM" property="orgid"/>
+        <result column="YLJGMC" property="orgname"/>
+        <result column="YLJGJS" property="description"/>
+        <result column="YLJGDZ" property="address"/>
+        <result column="YLJGMC" property="alias"/>
+        <result column="YLJGDJ" property="rank"/>
+        <result column="YLJGXZ" property="nature"/>
+        <result column="YLJGLB" property="category"/>
+        <result column="YLJGDH" property="tel"/>
+        <result column="YLJGWZ" property="web"/>
+        <result column="XXSCPB" property="state"/>
+    </resultMap>
+
+    <resultMap id="departMap" type="com.hospital.out.hospital.DepartmentVo">
+        <id column="orgid" property="orgid"/>
+        <result column="deptid" property="deptid"/>
+        <result column="stanid" property="stanid"/>
+        <result column="deptname" property="deptname"/>
+        <result column="description" property="description"/>
+        <result column="minage" property="age"/>
+        <result column="maxage" property="maxage"/>
+        <result column="specitalty" property="specitalty"/>
+        <result column="state" property="state"/>
+        <result column="category" property="category"/>
+        <result column="genre"  property="genre"/>
+    </resultMap>
+
+    <resultMap id="DoctorVoMap" type="com.hospital.out.hospital.DoctorVo">
+        <id column="orgid" property="orgid"/>
+        <result column="Ksdm" property="deptid"/>
+        <result column="docCode" property="docid"/>
+        <result column="hisdocid" property="hisdocid"/>
+        <result column="docName" property="docname"/>
+        <result column="docSex" property="docsex"/>
+        <result column="docTitle" property="title"/>
+        <result column="docInfo" property="description"/>
+        <result column="specialty" property="goodat"/>
+    </resultMap>
+
+    <resultMap id="PatientVoMap" type="com.hospital.out.hospital.PatientVo">
+        <result column="jzkh" property="patid"/>
+        <result column="xm" property="patname"/>
+        <result column="xb" property="patsex"/>
+        <result column="sfzh" property="idcard"/>
+        <result column="khlx" property="medcardtype"/>
+        <result column="ybkh" property="medcardno"/>
+        <result column="lxdh" property="mobileno"/>
+        <result column="jtzz" property="address"/>
+        <result column="jzcs" property="jzcs"/>
+        <result column="brlb" property="brlb"/>
+        <result column="brxzdm" property="brxzdm"/>
+    </resultMap>
+
+    <resultMap id="DoctorPbVo" type="com.hospital.out.hospital.DoctorPbVo">
+        <result column="pbCode" property="schid"/>
+        <result column="docCode" property="docid"/>
+        <result column="xm" property="docname"/>
+        <result column="xb" property="docsex"/>
+        <result column="mc" property="title"/>
+        <result column="depCode" property="deptid"/>
+        <result column="ksmc" property="deptname"/>
+        <result column="appdate" property="appdate"/>
+        <result column="timeType" property="ampm"/>
+        <result column="schType" property="categor"/>
+        <result column="regfee" property="regfee"/>
+        <result column="treatfee" property="fee"/>
+        <result column="numcount" property="numcount"/>
+    </resultMap>
+    <resultMap id="pbHyVoMap" type="com.hospital.out.hospital.PbHyVo">
+        <result column="PBMXXH" property="numid"/>
+        <result column="YYGHXH" property="numno"/>
+        <result column="appdate" property="appdate"/>
+        <result column="deadline" property="numtime"/>
+        <result column="YYBZ" property="numstate"/>
+    </resultMap>
+
+    <resultMap id="ksxxVoMap" type="com.hospital.domain.KsxxVo">
+        <result column="ksdm" property="ksdm"/>
+        <result column="ksmc" property="ksmc"/>
+        <result column="wdksdm" property="wdksdm"/>
+        <result column="wdksjs" property="wdksjs"/>
+        <result column="wz" property="wz"/>
+    </resultMap>
+
+    <select id="selectKsxx" resultMap="ksxxVoMap">
+        select ksdm,ksmc,wdksdm,wdksjs,wz from gy_ksdm where wsks=1
+    </select>
+
+    <select id="selectWebKsxx" resultType="java.lang.Integer" parameterType="java.lang.String">
+        select count(1) FROM web_ghksxx WHERE  yyksdm= #{ksdm}
+    </select>
+
+    <insert id="insertWebKsxx" parameterType="com.hospital.domain.KsxxVo">
+        INSERT INTO web_ghksxx
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            yyksdm,yyksmc,ksbzbm,yyksms,kslcwz
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{ksdm}, #{ksmc}, #{wdksdm}, #{wdksjs}, #{wz}
+        </trim>
+    </insert>
+
+
+    <select id="getPbHyVo" resultMap="pbHyVoMap" parameterType="java.lang.String">
+        select distinct clinic_date appdate,
+        (decode((select substr(jzsjqy,1,5) from gh_jzsjsz where pbjlxh=d.pbjlxh and ksghxh <![CDATA[<= ]]> d.yyghxh and jsghxh <![CDATA[>= ]]> d.yyghxh and ghsjlb=d.ghsjlb),'',decode(d.ghsjlb,1,'08:00','13:00'),
+        (select substr(jzsjqy,1,5) from gh_jzsjsz where pbjlxh=d.pbjlxh and ksghxh <![CDATA[<= ]]> d.yyghxh and jsghxh <![CDATA[>= ]]> d.yyghxh and ghsjlb=d.ghsjlb))) ||'~' || (
+        decode((select substr(jzsjqy,7,5) from gh_jzsjsz where pbjlxh=d.pbjlxh and ksghxh <![CDATA[<= ]]> d.yyghxh and jsghxh <![CDATA[>= ]]> d.yyghxh and ghsjlb=d.ghsjlb),'',decode(d.ghsjlb,1,'11:30','16:30'),
+        (select substr(jzsjqy,7,5) from gh_jzsjsz where pbjlxh=d.pbjlxh and ksghxh <![CDATA[<= ]]> d.yyghxh and jsghxh <![CDATA[>= ]]> d.yyghxh and ghsjlb=d.ghsjlb))) deadline,
+        d."PBMXXH",
+        d."YYGHXH",
+        d."YYBZ"
+        from MZYY_SCHEDUL ,"GH_YYPBMX" d where d.pbjlxh = jlxh
+        <if test="schid != null">
+            and d.PBJLXH =#{schid}
+        </if>
+        <if test="ampm !=null">
+            and d.ghsjlb = #{ampm}
+        </if>
+    </select>
+    <select id="selectCurrentNum" resultMap="pbHyVoMap" parameterType="java.lang.String">
+        select
+        (decode((select substr(jzsjqy,1,5) from gh_jzsjsz where pbjlxh=d.pbjlxh and ksghxh <![CDATA[<= ]]> d.yyghxh and jsghxh <![CDATA[>= ]]> d.yyghxh and ghsjlb=d.ghsjlb),'',decode(d.ghsjlb,1,'08:00','13:00'),
+        (select substr(jzsjqy,1,5) from gh_jzsjsz where pbjlxh=d.pbjlxh and ksghxh <![CDATA[<= ]]> d.yyghxh and jsghxh <![CDATA[>= ]]> d.yyghxh and ghsjlb=d.ghsjlb))) ||'~'||(
+        decode((select substr(jzsjqy,7,5) from gh_jzsjsz where pbjlxh=d.pbjlxh and ksghxh <![CDATA[<= ]]> d.yyghxh and jsghxh <![CDATA[>= ]]> d.yyghxh and ghsjlb=d.ghsjlb),'',decode(d.ghsjlb,1,'11:30','16:30'),
+        (select substr(jzsjqy,7,5) from gh_jzsjsz where pbjlxh=d.pbjlxh and ksghxh <![CDATA[<= ]]> d.yyghxh and jsghxh <![CDATA[>= ]]> d.yyghxh and ghsjlb=d.ghsjlb))) deadline ,
+        d."PBMXXH",
+        d."YYGHXH",
+        d."YYBZ"
+        from "GH_YYPBMX" d where 1=1
+        <if test="schid != null">
+            and d.PBJLXH =#{schid}
+        </if>
+        <if test="ampm !=null">
+            and d.ghsjlb = #{ampm}
+        </if>
+    </select>
+
+    <!-- 修改前版本 -->
+    <select id="getListDoctorPb" resultMap="DoctorPbVo" parameterType="java.lang.String">
+        select m.clinic_date appdate,
+        m.jlxh as pbCode,
+        decode(m.clinic_type,'普通','1','专家','2','名医','3','2') schType,
+        m.am_pm as timeType,
+        m.regfee,m.treatfee ,
+        m.dept_code as depCode,
+        m.doctor_code as docCode,
+        g.xm,g.xb,c.mc,s.ksmc
+        from MZYY_SCHEDUL m
+        left join gy_zgxx g on m.DOCTOR_CODE = g.zgid
+        left join (select * from gy_gydm where dmlb = 13) c on g.zc = c.dm
+        left join gy_ksdm s on s.ksdm = m.dept_code
+        where s.zfpb = 0
+        <if test="platdeptid != null">
+            and m.DEPT_CODE = #{platdeptid}
+        </if>
+        group by m.clinic_date,
+        m.jlxh,decode(m.clinic_type,'普通','1','专家','2','名医','3','2'),
+        m.am_pm, m.regfee,m.treatfee , m.dept_code,
+        m.doctor_code, g.xm,g.xb,c.mc,s.ksmc
+    </select>
+
+    <!--<select id="getListDoctorPb" resultMap="DoctorPbVo" parameterType="java.lang.String">
+        select m.clinic_date appdate,
+        m.jlxh as pbCode,
+        decode(m.clinic_type,'普通','1','专家','2','名医','3','2') schType,
+        m.am_pm as timeType,
+        m.regfee,m.treatfee ,
+        m.dept_code as depCode,
+        m.doctor_code as docCode,
+        g.xm,g.xb,w.YYYSZC mc,s.ksmc
+        from MZYY_SCHEDUL m
+        left join gy_zgxx g on m.DOCTOR_CODE = g.zgid
+        left join (select * from gy_gydm where dmlb = 13) c on g.zc = c.dm
+        left join WEB_GHYSXX w on m.DOCTOR_CODE=w.YYYSDM
+        left join gy_ksdm s on s.ksdm = m.dept_code
+        where s.zfpb = 0
+        <if test="platdeptid != null">
+            and m.DEPT_CODE = #{platdeptid}
+        </if>
+        group by m.clinic_date,
+        m.jlxh,decode(m.clinic_type,'普通','1','专家','2','名医','3','2'),
+        m.am_pm, m.regfee,m.treatfee , m.dept_code,
+        m.doctor_code, g.xm,g.xb,w.YYYSZC,s.ksmc
+    </select>-->
+
+    <resultMap id="NumOriginMap" type="com.hospital.out.hospital.NumOrigin">
+        <result property="mzlbxh" column="ws_mzlbxh"/>
+        <result property="docterCode" column="DOCTOR_CODE"/>
+        <result property="deptCode" column="DEPT_CODE"/>
+    </resultMap>
+    <select id="getDoctorPbVoByNumId" resultMap="NumOriginMap" parameterType="java.lang.String">
+      select b.ws_mzlbxh,b.DOCTOR_CODE,b.DEPT_CODE from GH_YYPBMX a ,MZYY_SCHEDUL b
+       where  rownum=1 and a.pbjlxh = b.JLXH and a.pbmxxh = #{pbmxxh}
+    </select>
+    <select id="getHospitalInfo" resultMap="BaseResultMap">
+        select YLJGDM,YLJGMC,YLJGJS,YLJGDZ,YLJGMC,YLJGDJ,
+        YLJGXZ,YLJGLB,YLJGDH, YLJGWZ,XXSCPB
+        from web_yljgxx
+    </select>
+    <select id="getListDepart" resultMap="departMap">
+        select ksdm deptid,ksmc deptname,wdksjs description, GBKSDM stanid,
+        '0' age,
+        '0' maxage,
+        '0'state,
+        '0'category ,wsks genre from gy_ksdm where zfpb = 0  and flksdm <![CDATA[ <> ]]> '70024'
+    </select>
+
+    <!-- 修改前版本 -->
+    <select id="getListDoc" resultMap="DoctorVoMap" parameterType="java.lang.String">
+        Select a.Zgid docCode,
+        a.Xm docName,
+        a.xb docSex,
+        a.Ksdm Ksdm,
+        c.Mc docTitle,
+        (select ysjssm from WEB_GHYSXX where yyysdm = a.zgid) docInfo,
+        (select yszgxk from WEB_GHYSXX where yyysdm = a.zgid) docDes,
+        (select ysjssm from WEB_GHYSXX where yyysdm = a.zgid) specialty,
+        '0' state
+        From Gy_Zgxx a, Gy_Ksdm b, (Select Dm, Mc From Gy_Gydm Where Dmlb = 13) c
+        Where a.Ksdm = b.Ksdm
+        And a.Zc = c.Dm(+) and c.mc is not null
+        And substr(a.Ysqx,0,1) = '1' and a.Zybz in (0,5,7)
+        <if test="ksdm != null">
+            And a.Ksdm =#{ksdm}
+        </if>
+    </select>
+
+    <!--<select id="getListDoc" resultMap="DoctorVoMap" parameterType="java.lang.String">
+        Select a.Zgid docCode,
+        a.Xm docName,
+        a.xb docSex,
+        a.Ksdm Ksdm,
+        (select YYYSZC from WEB_GHYSXX where yyysdm = a.zgid) docTitle,
+        (select ysjssm from WEB_GHYSXX where yyysdm = a.zgid) docInfo,
+        (select yszgxk from WEB_GHYSXX where yyysdm = a.zgid) docDes,
+        (select yszgxk from WEB_GHYSXX where yyysdm = a.zgid) specialty,
+        '0' state
+        From Gy_Zgxx a, Gy_Ksdm b
+        Where a.Ksdm = b.Ksdm
+        And substr(a.Ysqx,0,1) = '1' and a.Zybz in (0,5,7)
+        <if test="ksdm != null">
+            And a.Ksdm =#{ksdm}
+        </if>
+    </select>-->
+
+    <!--患者注册以及查询start （selectPatientBySfzh暂时不用）-->
+    <select id="selectPatientBySfzh" resultMap="PatientVoMap" parameterType="com.hospital.domain.PatientInVo">
+        Select jzkh,xm,xb,sfzh,khlx,ybkh,lxdh,jtzz
+        FROM gy_brjbxxk WHERE  sfzh=#{idcard}
+    </select>
+
+    <select id="selectPatientByJzkh" resultMap="PatientVoMap" parameterType="com.hospital.domain.PatientInVo">
+        Select jzkh,xm,xb,sfzh,khlx,ybkh,lxdh,jtzz,jzcs,brlb,brxzdm
+        FROM gy_brjbxxk WHERE  jzkh=#{patid}
+    </select>
+
+    <select id="selectPatient" resultMap="PatientVoMap" parameterType="com.hospital.domain.PatientInVo">
+        select jzkh,xm,xb,sfzh,khlx,ybkh,lxdh,jtzz from gy_brjbxxk where
+        sfzh= #{idcard}
+    </select>
+
+    <insert id="insertPatient" parameterType="com.hospital.domain.PatientInVo">
+        INSERT INTO gy_brjbxxk
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="patid != null">
+                jzkh,
+            </if>
+            <if test="patname != null">
+                xm,
+            </if>
+            <if test="patsex != null">
+                xb,
+            </if>
+            <if test="idcard != null">
+                sfzh,
+            </if>
+            <if test="mobileno != null">
+                lxdh,
+            </if>
+            <if test="medcardtype != null">
+                khlx,
+            </if>
+            <if test="medcardno != null">
+                ybkh,
+            </if>
+            <if test="address != null">
+                jtzz,
+            </if>
+            ldrq,brlb,brxzdm,csrq,jzcs,zycs
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="patid != null">
+                #{patid},
+            </if>
+            <if test="patname != null">
+                #{patname},
+            </if>
+            <if test="patsex != null">
+                #{patsex},
+            </if>
+            <if test="idcard != null">
+                #{idcard},
+            </if>
+            <if test="mobileno != null">
+                #{mobileno},
+            </if>
+            <if test="medcardtype != null">
+                #{medcardtype},
+            </if>
+            <if test="medcardno != null">
+                #{medcardno},
+            </if>
+            <if test="address != null">
+                #{address},
+            </if>
+            sysdate,#{brlb},#{brxzdm},#{csrq},0,0
+        </trim>
+    </insert>
+    <!--患者注册以及查询end-->
+
+    <!--患者信息修改start-->
+    <update id="updatePatient" parameterType="com.hospital.domain.PatientInVo">
+        UPDATE gy_brjbxxk
+        <set>
+            <if test="patname != null">
+                xm = #{patname},
+            </if>
+            <if test="patsex != null">
+                xb = #{patsex},
+            </if>
+            <if test="idcard != null">
+                sfzh = #{idcard},
+            </if>
+            <if test="mobileno != null">
+                lxdh = #{mobileno},
+            </if>
+            <if test="medcardtype != null">
+                khlx = #{medcardtype},
+            </if>
+            <if test="medcardno != null">
+                jzkh = #{medcardno},
+            </if>
+            <if test="address != null">
+                jtzz = #{address},
+            </if>
+        </set>
+        WHERE jzkh = #{patid}
+    </update>
+    <!--患者信息修改end-->
+
+    <!--预约挂号-->
+    <select id="selectNumid" resultType="java.lang.String" parameterType="java.lang.String">
+        SELECT numid from GH_MZYYK WHERE numid=#{numid} and zt=1
+    </select>
+    <!--判断取号密码是否重复-->
+    <select id="getCheckID" resultType="java.lang.String" parameterType="java.lang.String">
+        SELECT checkid from GH_MZYYK WHERE checkid=#{checkid}
+    </select>
+    <!--判断号源是否被预约-->
+    <select id="selectNumByPbxmxy" resultType="java.lang.Integer" parameterType="java.lang.String">
+        select YYBZ from GH_YYPBMX where PBMXXH = #{pbmxxh}
+    </select>
+    <select id="selectJzkh" resultType="java.lang.String" parameterType="java.lang.String">
+        SELECT jzkh from gy_brjbxxk WHERE jzkh=#{jzkh}
+    </select>
+
+    <update id="updateXhb" parameterType="java.lang.String">
+        UPDATE gy_xhb set dqz=dqz+1 where bm = #{tableName}
+    </update>
+
+    <select id="selectXhb" resultType="java.lang.Integer">
+        select DQZ from gy_xhb where bm = #{tableName}
+    </select>
+
+    <insert id="insertMzYyk" parameterType="com.hospital.out.hospital.GhkVo">
+        INSERT INTO GH_MZYYK
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="yyxh != null">
+                YYXH,
+            </if>
+            <if test="xm != null">
+                XM,
+            </if>
+            <if test="xb != null">
+                XB,
+            </if>
+            <if test="sfzh != null">
+                SFZH,
+            </if>
+            <if test="lxdh !=null">
+                LXDH,
+            </if>
+            <if test="yyrq1 != null">
+                YYRQ1,
+            </if>
+            <if test="yyrq2 != null">
+                YYRQ2,
+            </if>
+            <if test="pbxh !=null">
+                PBXH,
+            </if>
+            <if test="ksdm != null">
+                KSDM,
+            </if>
+            <if test="ysgh != null">
+                YSGH,
+            </if>
+            <if test="zt != null">
+                ZT,
+            </if>
+            <if test="yylb != null">
+                YYLB,
+            </if>
+            <if test="yysj != null">
+                YYSJ,
+            </if>
+            <if test="ghxh != null">
+                GHXH,
+            </if>
+            <if test="mzlbxh != null">
+                MZLBXH,
+            </if>
+            <if test="jzkh != null">
+                JZKH,
+            </if>
+            <if test="userid != null">
+                USERID,
+            </if>
+            <if test="checkid != null">
+                CHECKID,
+            </if>
+            <if test="numid != null">
+                NUMID,
+            </if>
+            <if test="jtzz !=null">
+                JTZZ,
+            </if>
+            <if test="xxczid !=null">
+                XXCZID,
+            </if>
+            <if test="czgh !=null">
+                CZGH,
+            </if>
+            <if test="djrq !=null">
+                DJRQ,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="yyxh != null">
+                #{yyxh},
+            </if>
+            <if test="xm != null">
+                #{xm},
+            </if>
+            <if test="xb != null">
+                #{xb},
+            </if>
+            <if test="sfzh != null">
+                #{sfzh},
+            </if>
+            <if test="lxdh !=null">
+                #{lxdh},
+            </if>
+            <if test="yyrq1 != null">
+                to_date(#{yyrq1},'yyyy-MM-dd'),
+            </if>
+            <if test="yyrq2 != null">
+
+                to_date(#{yyrq2},'yyyy-MM-dd hh24:mi:ss'),
+            </if>
+            <if test="pbxh !=null">
+                #{pbxh},
+            </if>
+            <if test="ksdm != null">
+                #{ksdm},
+            </if>
+            <if test="ysgh != null">
+                #{ysgh},
+            </if>
+            <if test="zt != null">
+                #{zt},
+            </if>
+            <if test="yylb != null">
+                #{yylb},
+            </if>
+            <if test="yysj != null">
+                #{yysj},
+            </if>
+            <if test="ghxh != null">
+                #{ghxh},
+            </if>
+            <if test="mzlbxh != null">
+                #{mzlbxh},
+            </if>
+            <if test="jzkh != null">
+                #{jzkh},
+            </if>
+            <if test="userid != null">
+                #{userid},
+            </if>
+            <if test="checkid != null">
+                #{checkid},
+            </if>
+            <if test="numid != null">
+                #{numid},
+            </if>
+            <if test="jtzz !=null">
+                #{jtzz},
+            </if>
+            <if test="xxczid !=null">
+                #{xxczid},
+            </if>
+            <if test="czgh !=null">
+                #{czgh},
+            </if>
+            <if test="djrq !=null">
+                to_date(#{djrq},'yyyy-MM-dd hh24:mi:ss'),
+            </if>
+        </trim>
+    </insert>
+
+    <insert id="insertYypb" parameterType="com.hospital.domain.YyghInVo">
+        INSERT INTO GH_YYPBMX
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="numid != null">
+                pbmxxh,
+            </if>
+            <if test="schid != null">
+                pbjlxh,
+            </if>
+            <if test="yylxdm != null">
+                yylxdm,
+            </if>
+            <if test="ampm != null">
+                ghsjlb,
+            </if>
+            <if test="no != null">
+                yyghxh,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="numid != null">
+                #{numid},
+            </if>
+            <if test="schid != null">
+                #{schid},
+            </if>
+            <if test="yylxdm != null">
+                #{yylxdm},
+            </if>
+            <if test="ampm != null">
+                #{ampm},
+            </if>
+            <if test="no != null">
+                #{no},
+            </if>
+        </trim>
+    </insert>
+
+    <!--预约取消-->
+    <update id="updateGhk" parameterType="com.hospital.domain.YyghInVo">
+        UPDATE GH_MZYYK SET zt=-1 WHERE numid=#{numid} and zt=0
+        <if test="numdate != null">
+            AND yyrq1=to_date(#{numdate},'yyyy-MM-dd')
+        </if>
+    </update>
+    <update id="updateSucceGhk" parameterType="java.lang.String">
+        UPDATE GH_MZYYK SET zt= 1 AND JLXH = #{jlxh} WHERE yyxh=#{yyxh} and zt=0
+    </update>
+    <resultMap id="NumSourceVoMap" type="com.hospital.out.hospital.NumSourceVo">
+        <result column="yybz" property="yybz"/>
+        <result column="num" property="count"/>
+    </resultMap>
+    <!--号源状态数量-->
+    <select id="getCount" parameterType="java.lang.String" resultMap="NumSourceVoMap">
+        select yybz,count(yybz)num from GH_YYPBMX  where PBJLXH = #{pbjlxh} AND GHSJLB=#{ampm}GROUP BY yybz
+    </select>
+
+    <!--号源锁定-->
+    <update id="lockNum" parameterType="java.lang.String">
+        UPDATE GH_YYPBMX SET YYBZ = 1 WHERE PBMXXH = #{pbmxxh}
+    </update>
+
+    <!--号源释放-->
+    <update id="unLockNum" parameterType="java.lang.String">
+        UPDATE GH_YYPBMX SET YYBZ = 0 WHERE PBMXXH = #{pbmxxh}
+    </update>
+
+    <!--获取当天排班-->
+    <select id="selectTheDayPB" parameterType="java.lang.String" resultMap="DoctorPbVo">
+        select distinct ll.register_fee regfee,ll.clinic_fee treatfee,
+        ll.doctor_code docCode,ll.dept_code depCode,ll.am_pm timeType,
+        ll.jlxh pbCode,xx.xm,xx.xb,c.mc,s.ksmc
+        from GH_SCHEDUL ll
+        left join gy_zgxx xx on xx.zgid = ll.doctor_code  and xx.zybz in(0,5)
+        left join (select * from gy_gydm where dmlb = 13) c on xx.zc = c.dm
+        left join gy_ksdm s on s.ksdm = ll.dept_code where s.zfpb = 0 and ll.dept_code = #{ksdm}
+    </select>
+    <resultMap id="currentGhkVoMap" type="com.hospital.domain.CurrentGhkVo">
+        <result column="ghsjlb" property="sjlb"/>
+        <result column="ksdm" property="ksdm"/>
+        <result column="mzlbxh" property="mzlbxh"/>
+        <result column="ksmc" property="ksmc"/>
+        <result column="ysgh" property="ysgh"/>
+        <result column="jlxh" property="pbxh"/>
+        <result column="clinic_fee" property="zlf"/>
+    </resultMap>
+    <select id="selectCurrentByPBXH" resultMap="currentGhkVoMap" parameterType="java.lang.String">
+    select pbmx.ghsjlb,pbk.ksdm,pbk.mzlbxh,ksd.ksmc,pbk.ysgh
+    from GH_YYPBMX pbmx
+    left join GH_YZPBK pbk on pbmx.pbjlxh = pbk.jlxh
+    left join gy_ksdm ksd on ksd.ksdm = pbk.ksdm
+    where pbmx.yybz = 1 and pbmx.pbmxxh  = #{numid}
+    </select>
+    <select id="selectClinicByPBXH" parameterType="java.lang.String" resultMap="currentGhkVoMap">
+        SELECT dul.MZJLXH jlxh,dul.clinic_fee FROM  GH_SCHEDUL dul WHERE
+        dul.dept_code = #{ksdm} and  dul.am_pm = #{ghsjlb}
+        <if test="ysgh != null ">   and  dul.doctor_code = #{ysgh} </if>
+        <if test="ysgh == null">and  dul.doctor_code is NULL </if>
+    </select>
+
+    <!-- jlxh,jzkh,jzcs(默认为0),brxm,brlb,brxz,mzlbxh,pbxh,ksdm,ghrq,ghxh,ysgh,sjlb,zlf,czgh(),fybh,jylsh-->
+    <insert id="insertGHKByCurrentGhkVo" parameterType="com.hospital.domain.CurrentGhkVo">
+        INSERT INTO GH_GHK
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="ysgh != null">
+                ysgh,
+            </if>
+            jlxh,jzkh,jzcs,brxm,brlb,brxz,mzlbxh,pbxh,ksdm,ghrq,ghxh,sjlb,zlf,czgh,fybh,ydjylsh,czrq,thbz,paymode
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="ysgh != null">
+                #{ysgh},
+            </if>
+            #{jlxh}, #{jzkh}, #{jzcs}, #{brxm}, #{brlb}, #{brxz}, #{mzlbxh}, #{pbxh}, #{ksdm},
+            to_date(#{ghrq},'yyyy-mm-dd hh24:mi:ss'), #{ghxh}, #{sjlb}, #{zlf}, #{czgh}, #{fybh},
+            #{jylsh}, to_date(#{czrq},'yyyy-mm-dd hh24:mi:ss'),#{thbz},#{payModel}
+        </trim>
+    </insert>
+
+    <!--挂号预结算-->
+    <select id="selectTodayGhsf" resultType="com.hospital.out.clinicPayInter.GhsfVo" parameterType="com.hospital.domain.GhInVo">
+         select (select ks.ksmc from gy_ksdm ks where ks.ksdm=b.dept_code) deptname,
+            b.dept_code deptCode,
+            b.doctor_name docname,
+            b.docrank docrank,
+            b.register_fee regfee,
+            b.register_fee+b.clinic_fee treatfee,
+            b.clinic_fee regamt,
+            sysdate visitdate,
+            decode(b.am_pm,1,'08:00:00-11:30:00',2,'13:00:00-16:30:00') visittime,
+            b.wz visitaddress,
+            c.yyghxh seqnum
+        from GH_SCHEDUL b,GH_YYPBMX c
+        where  b.jlxh=c.pbjlxh and c.ghsjlb = b.am_pm
+        and c.pbmxxh=#{ghInVo.numid} and c.pbjlxh=#{ghInVo.schid} and c.ghsjlb=#{ghInVo.ampm} and c.yybz=0
+    </select>
+
+    <select id="selectGhsf" resultType="com.hospital.out.clinicPayInter.GhsfVo" parameterType="com.hospital.domain.GhInVo">
+        select
+          (select dqz from gy_xhb where bm='GH_MZYYK' )  regid,
+          c.ksmc    deptname,
+          (select zg.xm   from gy_zgxx zg where a.ysgh=zg.zgid) docname,
+          b.mzlbmc docrank,
+          nvl(b.ghf,0) regfee,
+          decode(c.jiagelb,'3',nvl(b.zlf_et,0),nvl(b.zlf,0))+nvl(b.ghf,0) treatfee,
+          decode(c.jiagelb,'3',nvl(b.zlf_et,0),nvl(b.zlf,0)) regamt,
+          a.yyrq1 visitdate,
+          decode(a.yysj,1,'08:00:00-11:30:00',2,'13:00:00-16:30:00') visittime,
+          c.wz visitaddress,
+          a.ghxh seqnum
+        from Gh_mzyyk a,gh_mzlbk b,gy_ksdm c where a.mzlbxh=b.mzlbxh and a.ksdm = c.ksdm and a.zt=0
+          and a.numid=#{ghInVo.numid} and a.jzkh=#{ghInVo.patid} and a.yysj=#{ghInVo.ampm}
+          and to_char(a.yyrq1,'yyyymmdd')=#{ghInVo.visitdate} and a.pbxh=#{ghInVo.schid}
+    </select>
+
+    <!--挂号列表状态查询-->
+    <select id="getGhxx" parameterType="java.lang.String" resultType="com.hospital.out.clinicPayInter.GhsfVo">
+        select jzkh,jzcs,ghxh,jlxh,to_char(ghrq,'yyyy-mm-dd hh24:mi:ss')ghrq,sjlb from gh_ghk where jlxh=#{preid}
+    </select>
+
+    <select id="getThxx" parameterType="com.hospital.out.clinicPayInter.GhsfVo" resultType="com.hospital.out.clinicPayInter.GhsfVo">
+        select jzkh,jzcs,ghxh from gh_ghk where jzkh=#{ghsfVo.jzkh} and jzcs=#{ghsfVo.jzcs}
+        and ghxh=#{ghsfVo.ghxh} and thbz = 1 and jlxh = #{ghsfVo.jlxh}
+    </select>
+
+    <select id="getJzXH" resultType="java.lang.String" parameterType="java.lang.String">
+          select jzxh from zj_jzxx where jlxh = #{jlxh}
+    </select>
+</mapper>

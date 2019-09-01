@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hospital.dao.quenCall.DeptInfoDao">
+
+    <resultMap type="com.hospital.out.quenCallInter.DeptVo" id="BaseResultMap">
+      <!--  <id column="YLJGDM" property="orgid" />-->
+        <result column="ksdm" property="deptid" />
+        <result column="ksmc" property="deptname" />
+        <result column="zgid" property="docid" />
+        <result column="xm" property="docname" />
+        <result column="ghrq" property="visitdate" />
+        <result column="sjlb" property="visittype" />
+        <result column="ghxh" property="ghnumber" />
+    </resultMap>
+
+    <!--普通门诊-->
+    <select id="getDeptInfo" resultMap="BaseResultMap" parameterType="com.hospital.domain.DeptInVo">
+
+        select a.ghrq, a.ksdm, b.ksmc,c.zgid, c.xm, a.sjlb, a.jzbs, a.ghxh from
+        gh_ghk a left join gy_brjbxxk d on a.jzkh = d.jzkh
+        left join  gy_ksdm b  on  a.ksdm = b.ksdm
+        left join  gy_zgxx c  on  a.ysgh = c.zgid
+        where a.jzbs is null AND a.thbz =0 AND a.zfpb is null AND d.sfzh=#{deptInVo.idcard}
+        AND a.ghrq >= trunc(sysdate) and a.ghrq &lt; trunc(sysdate)+1
+        <if test="deptInVo.docid !=null">AND c.zgid=#{deptInVo.docid}  </if>
+        <if test="deptInVo.deptid != null"> AND a.ksdm=#{deptInVo.deptid}</if>
+    </select>
+
+    <select id="selectJzrqByKsdm" resultType="java.util.Date" >
+        SELECT max(jzrq) FROM gh_ghk
+        WHERE jzrq &lt; sysdate
+        <if test="deptid != null">  AND ksdm=#{deptid}</if>
+
+    </select>
+
+    <select id="selectGhxhByJzrq" resultMap="BaseResultMap" parameterType="com.hospital.domain.DeptInVo">
+        SELECT
+          jzrq,
+          sjlb,
+          ghxh
+        FROM
+          gh_ghk
+        WHERE
+          jzrq=#{jzsj}
+        <if test="deptid !=null">  AND ksdm=#{deptid}</if>
+
+    </select>
+
+    <select id="selectZghsBySjlb" resultType="java.lang.Integer" parameterType="com.hospital.domain.DeptInVo">
+        SELECT
+          count(*)
+        FROM
+          gh_ghk
+        WHERE
+          sjlb=#{sjlb} AND jzrq >= trunc(sysdate) and jzrq &lt; trunc(sysdate)+1
+          <if test="deptid != null" >
+              AND ksdm=#{deptid}
+          </if>
+
+    </select>
+
+    <!--专家门诊-->
+    <select id="getDeptSpecialInfo" resultMap="BaseResultMap" parameterType="com.hospital.domain.DeptInVo">
+        SELECT
+          distinct(a.ghrq),
+          a.ksdm,
+          b.ksmc,
+          c.zgid,
+          c.xm,
+          a.jzbs,
+          a.sjlb
+        FROM
+          GH_GHK a,
+          GY_KSDM b,
+          GY_ZGXX c
+        WHERE
+            a.ghrq >= trunc(sysdate) and a.ghrq &lt; trunc(sysdate)+1
+        AND a.mzlbxh &gt; 3 and jzbs is null AND a.thbz =0 AND a.zfpb is null
+        and a.ksdm=b.ksdm
+        and a.ysgh=c.zgid
+        <if test="docid != null">
+            and a.ysgh=#{docid}
+        </if>
+       <if test="deptid != null">
+           and a.ksdm=#{deptid}
+       </if>
+    </select>
+
+    <select id="getNormalInfo" resultMap="BaseResultMap" parameterType="com.hospital.domain.DeptInVo">
+        SELECT
+        distinct(a.ghrq),
+        a.ksdm,
+        b.ksmc,
+        a.sjlb,
+        a.jzbs,
+        a.ghxh
+        FROM
+        gh_ghk a,
+        gy_ksdm b
+        WHERE
+        a.ksdm=b.ksdm and jzbs is null
+        AND a.ghrq >= trunc(sysdate) and a.ghrq &lt; trunc(sysdate)+1
+        AND a.mzlbxh &lt; 3
+        <if test="deptid != null"> AND a.ksdm=#{deptid}</if>
+
+    </select>
+
+    <select id="selectJzrqByYsgh" resultType="java.util.Date" >
+        SELECT max(mzrq) FROM gh_ghk
+        WHERE mzrq &lt; sysdate
+        <if test="docid != null">  AND ysgh=#{docid}</if>
+
+    </select>
+
+    <select id="selectGhxhByYsgh" resultMap="BaseResultMap" parameterType="com.hospital.domain.DeptInVo">
+        SELECT
+        jzrq,
+        sjlb,
+        ghxh
+        FROM
+        gh_ghk
+        WHERE
+        mzrq=#{jzsj}
+        AND ksdm=#{deptid}
+        <if test="docid !=null">  AND ysgh=#{docid}</if>
+
+    </select>
+
+    <select id="getNo" resultType="java.lang.String" parameterType="com.hospital.domain.DeptInVo">
+        SELECT
+        max(rownum) no
+        FROM
+        GH_GHK
+        WHERE
+          ghrq >= trunc(sysdate) and ghrq &lt; trunc(sysdate)+1
+        AND ghxh=0
+        AND jzbs=1
+        <if test="docid !=null ">and ysgh=#{docid}</if>
+         <if test="deptid !=null "> and ksdm=#{deptid} </if>
+
+    </select>
+
+</mapper>

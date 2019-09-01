@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hospital.dao.prepaidInHospital.PrepaidDao">
+    <resultMap id="ZYPatientVoMap" type="com.hospital.out.clinicPayInter.ZYPatientVo">
+        <result column="bingrenbh" property="patientcode"/>
+        <result column="binglih" property="inhospitalrecordnumber"/>
+        <result column="xingming" property="patientname"/>
+        <result column="ruyuanrq" property="begintime"/>
+        <result column="dangqianks" property="deptname"/>
+        <result column="dangqianbq" property="wardname"/>
+        <result column="jiuzhenkh" property="medcardno"/>
+        <result column="jiatingdz" property="address"/>
+        <result column="chuyuanrq" property="endtime"/>
+        <result column="shenfenzh" property="idcard"/>
+        <result column="ksdm" property="deptcode"/>
+        <result column="total_fee" property="totalamount"/>
+        <result column="deposit_xj" property="payamount"/>
+        <result column="inhospitalstatus" property="inhospitalstatus"/>
+        <result column="idcardtype" property="idcardtype"/>
+        <result column="medcardtype" property="medcardtype"/>
+        <result column="xingbie" property="patientsex"/>
+        <result column="dangqiancw" property="bedid"/>
+    </resultMap>
+    <select id="getZYPatientVoBySFZH" resultMap="ZYPatientVoMap" parameterType="java.lang.String">
+        select DISTINCT(z.bingrenbh),
+        z.bingrenbh,z.binglih,z.xingming,z.xingbie,to_char(z.ruyuanrq,'yyyy-mm-dd hh24:mi:ss')ruyuanrq,z.dangqianks,
+        z.dangqianbq,z.jiuzhenkh,
+        z.jiatingdz,to_char(z.chuyuanrq,'yyyy-mm-dd hh24:mi:ss')chuyuanrq,z.shenfenzh,z.dangqiancw,
+        b.ksdm,f.total_fee,f.deposit_xj,'1'inhospitalstatus,'1'idcardtype,'2'medcardtype
+        from zy_bingrenxx z,zy_total_fee f,gy_ksdm b
+        where z.bingrenbh = f.patient_no and z.dangqianks = b.ksmc and z.chuyuanrq is null
+        and z.shenfenzh=#{sfzh}
+    </select>
+    <select id="prepaidFunds" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT SUM (NVL ("ZY_DEPOSIT_FILE"."AMOUNT", 0))
+        FROM "ZY_DEPOSIT_FILE", "ZY_PATIENT_INFORMATION"
+        WHERE  <![CDATA[ "ZY_DEPOSIT_FILE"."STATUS"<>4 ]]>
+        AND <![CDATA[ "ZY_DEPOSIT_FILE"."STATUS"<>5 ]]>
+        AND "ZY_DEPOSIT_FILE"."PATIENT_NO" = "ZY_PATIENT_INFORMATION"."PATIENT_NO"
+        AND "ZY_DEPOSIT_FILE"."JS_NO" = 0
+        AND "ZY_DEPOSIT_FILE"."PATIENT_NO" = #{patientNo}
+    </select>
+
+    <resultMap id="CostInventoryVoMap" type="com.hospital.out.clinicPayInter.CostInventoryVo">
+        <result column="CHARGE_NAME" property="costName"/>
+        <result column="SL" property="costQuantity"/>
+        <result column="DJ" property="costUnitPrice"/>
+        <result column="FEE" property="costSubtotal"/>
+        <result column="FYGL" property="fygl"/>
+    </resultMap>
+    <select id="oneDayItems" resultMap="CostInventoryVoMap" parameterType="java.lang.String">
+        SELECT "ZY_DETAIL_CHARGE"."FYGL","ZY_DETAIL_CHARGE"."CHARGE_NAME",
+        "ZY_DETAIL_CHARGE"."DJ","ZY_DETAIL_CHARGE"."SL" sl,
+        ROUND("ZY_DETAIL_CHARGE"."DJ" * "ZY_DETAIL_CHARGE"."SL", 2) fee
+        FROM "ZY_DETAIL_CHARGE", "GY_KSDM"
+        WHERE ("ZY_DETAIL_CHARGE"."PATIENT_NO" = #{patientNo})
+        AND NVL("ZY_DETAIL_CHARGE"."ZX_KS", "ZY_DETAIL_CHARGE"."CURR_KS") =gy_ksdm.ksdm(+)
+        AND "ZY_DETAIL_CHARGE"."JS_NO" = '0'
+        AND "ZY_DETAIL_CHARGE"."JCFX_DATE" BETWEEN
+        to_date(#{begintime}, 'yyyy-mm-dd') AND
+        to_date(#{endtime}, 'yyyy-mm-dd hh24:mi:ss')
+        AND ('*' = '*' OR  INSTR('*', '+' || "ZY_DETAIL_CHARGE"."FYGL" || '+') > 0)
+        AND "ZY_DETAIL_CHARGE"."TWICE_DETAIL_CODE" &lt;&gt; 'AU'
+        AND "ZY_DETAIL_CHARGE"."TWICE_DETAIL_CODE" &lt;&gt; 'HY'
+        UNION ALL
+        SELECT "ZY_DETAIL_CHARGE"."FYGL","ZY_DETAIL_CHARGE"."CHARGE_NAME",
+        "ZY_DETAIL_CHARGE"."DJ",
+        (TRUNC(DECODE(SIGN("ZY_DETAIL_CHARGE"."CHARGE_DATE" - to_date(#{endtime}, 'yyyy-mm-dd hh24:mi:ss')),
+        1, to_date(#{endtime}, 'yyyy-mm-dd hh24:mi:ss'),
+        "ZY_DETAIL_CHARGE"."CHARGE_DATE")) -
+        TRUNC(DECODE(SIGN(to_date(#{begintime}, 'yyyy-mm-dd') - "ZY_DETAIL_CHARGE"."START_DATE"), 1,
+        to_date(#{begintime}, 'yyyy-mm-dd'),
+        "ZY_DETAIL_CHARGE"."START_DATE")) + 1) sl,
+        ROUND(NVL("ZY_DETAIL_CHARGE"."DJ", 0) *
+        (TRUNC(DECODE(SIGN("ZY_DETAIL_CHARGE"."CHARGE_DATE" -
+        to_date(#{endtime}, 'yyyy-mm-dd hh24:mi:ss')),
+        1,to_date(#{endtime}, 'yyyy-mm-dd hh24:mi:ss'),
+        "ZY_DETAIL_CHARGE"."CHARGE_DATE")) -
+        TRUNC(DECODE(SIGN(to_date(#{begintime}, 'yyyy-mm-dd') -"ZY_DETAIL_CHARGE"."START_DATE"),
+        1, to_date(#{begintime}, 'yyyy-mm-dd'), "ZY_DETAIL_CHARGE"."START_DATE")) + 1),2) fee
+        FROM "ZY_DETAIL_CHARGE", "GY_KSDM"
+        WHERE ("ZY_DETAIL_CHARGE"."PATIENT_NO" = #{patientNo})
+        AND NVL("ZY_DETAIL_CHARGE"."ZX_KS", "ZY_DETAIL_CHARGE"."CURR_KS") =gy_ksdm.ksdm(+)
+        AND "ZY_DETAIL_CHARGE"."JS_NO" = '0'
+        AND "ZY_DETAIL_CHARGE"."TWICE_DETAIL_CODE" = 'AU'
+        AND (to_date(#{begintime}, 'yyyy-mm-dd') BETWEEN
+        "ZY_DETAIL_CHARGE"."START_DATE" AND
+        "ZY_DETAIL_CHARGE"."CHARGE_DATE" OR
+        to_date(#{endtime}, 'yyyy-mm-dd hh24:mi:ss') BETWEEN
+        "ZY_DETAIL_CHARGE"."START_DATE" AND "ZY_DETAIL_CHARGE"."CHARGE_DATE" OR
+        to_date(#{begintime}, 'yyyy-mm-dd') &lt;= "ZY_DETAIL_CHARGE"."START_DATE" AND
+        "ZY_DETAIL_CHARGE"."CHARGE_DATE" &lt;= to_date(#{endtime}, 'yyyy-mm-dd hh24:mi:ss'))
+        UNION ALL
+        SELECT "ZY_DETAIL_CHARGE"."FYGL","ZY_DETAIL_CHARGE"."CHARGE_NAME",
+        "ZY_DETAIL_CHARGE"."DJ", "ZY_DETAIL_CHARGE"."SL" sl,
+        ROUND("ZY_DETAIL_CHARGE"."DJ" * "ZY_DETAIL_CHARGE"."SL", 2) fee
+        FROM "ZY_DETAIL_CHARGE", "GY_KSDM"
+        WHERE ("ZY_DETAIL_CHARGE"."PATIENT_NO" = #{patientNo})
+        AND NVL("ZY_DETAIL_CHARGE"."ZX_KS", "ZY_DETAIL_CHARGE"."CURR_KS") =gy_ksdm.ksdm(+)
+        AND "ZY_DETAIL_CHARGE"."JS_NO" = '0'
+        AND "ZY_DETAIL_CHARGE"."CHARGE_DATE" BETWEEN
+        to_date(#{begintime}, 'yyyy-mm-dd') AND
+        to_date(#{endtime}, 'yyyy-mm-dd hh24:mi:ss')
+        AND (INSTR('+by+cy+hy+my+zy+mz+ss+ly+',
+        '+' || "ZY_DETAIL_CHARGE"."TWICE_DETAIL_CODE" || '+') = 0)
+        AND ('*' = '*' OR INSTR('*', '+' || "ZY_DETAIL_CHARGE"."FYGL" || '+') > 0)
+        AND "ZY_DETAIL_CHARGE"."TWICE_DETAIL_CODE" = 'HY'
+    </select>
+
+    <resultMap id="costMapId" type="com.hospital.out.clinicPayInter.CostMap">
+        <result column="YLMC" property="costName"/>
+        <result column="YLXH" property="costCode"/>
+    </resultMap>
+    <select id="getCostMap" resultMap="costMapId">
+      SELECT "GY_YLSF"."YLXH" YLXH, "GY_YLSF"."YLMC" YLMC
+     FROM "GY_YLSF" WHERE ("GY_YLSF"."FLDM" = 0 AND "GY_YLSF"."YLXH" = "GY_YLSF"."SFXM") order by ylxh
+    </select>
+
+
+    <insert id="insertPrepaidFunds" parameterType="com.hospital.domain.PrepaidVo">
+      insert into zy_deposit_file
+      (jlxh,patient_no,js_no,name,depo_date,
+            op_id,amount,depo_type,status, dept_code,JRJYLSH)
+	  values (#{jlxh},#{patientNo},'0',#{name},
+	  to_date(#{depoDate},'yyyy-mm-dd hh24:mi:ss'),
+          'AUTO8',#{payamount}, #{paymode}, '1',#{deptCode},#{agtOrderNumber})
+    </insert>
+    <update id="updatePrepaidJLXH">
+        update GY_xhb SET dqz =dqz + zz WHERE bm = 'ZY_DEPOSIT_FILE'
+    </update>
+    <select id="selectPrepaidJLXH" resultType="java.lang.Integer">
+        SELECT dqz FROM GY_xhb WHERE bm ='ZY_DEPOSIT_FILE'
+    </select>
+
+    <resultMap id="paymenTrecordVoMap" type="com.hospital.out.hospital.PaymenTrecordVo">
+        <result column="binglih" property="inHospitalRecordNumber"/>
+        <result column="amount" property="payAmount"/>
+        <result column="depo_date" property="payedTime"/>
+        <result column="depo_type" property="payMode"/>
+    </resultMap>
+
+    <select id="selectDetailedList" resultMap="paymenTrecordVoMap">
+              select b.binglih,z.amount,to_char(z.depo_date,'yyyy-mm-dd hh24:mi:ss')depo_date,z.depo_type from  zy_deposit_file z,
+               zy_bingrenxx b where z.patient_no = b.bingrenbh and
+               (b.chuyuanrq is null and b.shenfenzh=#{sfzh})
+    </select>
+</mapper>

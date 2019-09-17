@@ -7,6 +7,7 @@
         <result column="JLXH" property="schid"/>
         <result column="KSRQ" property="begindate"/>
         <result column="JSRQ" property="enddate"/>
+        <result column="AMPM" property="ampm"/>
     </resultMap>
 
     <resultMap id="mzyykjlxhVoMap" type="com.hospital.out.hospital.MzyykJlxhVo">
@@ -27,13 +28,22 @@
         <result column="jzkh" property="cardno"/>
     </resultMap>
     <select id="findBy" resultMap="tzlbVoMap" parameterType="java.lang.String">
-        select g.JLXH,to_char(g.KSRQ,'yyyyMMdd') ksrq,
-        to_char(g.JSRQ ,'yyyyMMdd') jsrq from GH_MBZHGL g where
-        1=1
-        <if test="schid != null and schid != ''">
-            AND g.JLXH = #{schid}
-        </if>
-        AND g.JSRQ BETWEEN to_date( #{begindate},'yyyy-mm-dd hh24:mi:ss')AND to_date( #{endate},'yyyy-mm-dd hh24:mi:ss')
+
+        SELECT b.jlxh,
+        case
+        when a.swjsh &lt; 0 and a.xwjsh &lt; 0 then
+        '3'
+        when a.swjsh &lt; 0 and a.xwjsh &gt;= 0 then
+        '1'
+        when a.swjsh &gt;= 0 and a.xwjsh &lt; 0 then
+        '2'
+        end as ampm,
+
+        to_char(a.KSRQ,'yyyyMMdd') ksrq,
+        to_char(a.JSRQ ,'yyyyMMdd') jsrq FROM GH_MBZHGL a,gh_yzpbk b
+        where a.ksdm=b.ksdm and a.ysgh=b.ysgh and a.xq=b.xq
+        and a.czrq > sysdate-90 and a.ksdm=#{ksdm}
+        and a.jsrq BETWEEN to_date( #{begindate},'yyyy-mm-dd hh24:mi:ss')AND to_date( #{endate},'yyyy-mm-dd hh24:mi:ss')
     </select>
 
     <select id="findByOrderId" parameterType="java.lang.String" resultMap="JZlbMap">

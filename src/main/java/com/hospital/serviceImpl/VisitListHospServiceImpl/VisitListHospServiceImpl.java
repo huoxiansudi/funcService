@@ -34,13 +34,12 @@ public class VisitListHospServiceImpl implements VisitListHospService {
     private NumidService numidService;
 
     @Override
-    public List<TzlbVo> findBy(String schid, String begindate, String endate) {
+    public List<TzlbVo> findBy(String ksbh, String begindate, String endate) {
 
 
-        List<TzlbVo> list = visitListHospDao.findBy(schid, begindate, endate);
+        List<TzlbVo> list = visitListHospDao.findBy(ksbh, begindate, endate);
         for (TzlbVo temp : list) {
 
-            temp.setAmpm("3");
             temp.setReason("12");
         }
         return list;

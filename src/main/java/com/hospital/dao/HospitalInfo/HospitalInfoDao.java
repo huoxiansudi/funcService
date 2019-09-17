@@ -53,6 +53,12 @@ public interface HospitalInfoDao {
 
     List<DoctorPbVo> getListDoctorPb(@Param(value = "platdeptid") String platdeptid);
 
+    List<JlxhVo> getSpeYzPbk(@Param(value = "platdeptid") String platdeptid);
+
+    int getSpeYyPbmx(@Param(value = "jlxh") String jlxh);
+
+    int getSpeYybz(@Param(value = "jlxh") String jlxh);
+
     List<NumSourceVo> getCount(@Param(value = "pbjlxh") String pbjlxh,@Param(value = "ampm") String ampm);
 
     List<PbHyVo> getPbHyVo(@Param(value = "schid") String schid, @Param(value = "ampm") String ampm);
@@ -90,4 +96,9 @@ public interface HospitalInfoDao {
     int selectWebKsxx(String ksdm);
 
     int insertWebKsxx(KsxxVo ksxxVo);
+
+    DoctorPbVo getSpeYsxx(String jlxh);
+
+    int getSwSfTz(DoctorPbVo doctorPbVo);
+    int getXwSfTz(DoctorPbVo doctorPbVo);
 }

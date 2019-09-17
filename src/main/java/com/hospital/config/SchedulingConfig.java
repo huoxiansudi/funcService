@@ -16,9 +16,9 @@ public class SchedulingConfig {
     @Autowired
     private NumidService numidService;
 
-    @Scheduled(cron = "0 50 16 * * ?")
+    @Scheduled(cron = "0 50 14 * * ?")
     public void scheduler() {
-        System.out.println("16:50分钟执行！！！！！！！");
+        System.out.println("14:50分钟执行！！！！！！！");
         numidService.updateYybz();
     }
 

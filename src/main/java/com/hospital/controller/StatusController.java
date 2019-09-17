@@ -275,11 +275,11 @@ public class StatusController {
                 return ResultModel.failResultModel("号源释放失败");
 
             case "100211":
-                String schid100211 = objectJson.getString("schid");
+                String ksbh = objectJson.getString("deptid");
                 String begindate = objectJson.getString("begindate");
                 String endate = objectJson.getString("endate");
-                if (StringUtils.hasText(begindate) && StringUtils.hasText(endate)) {
-                    List<TzlbVo> visitR = visitListHospService.findBy(schid100211, begindate, endate);
+                if (StringUtils.hasText(ksbh) && StringUtils.hasText(begindate) && StringUtils.hasText(endate)) {
+                    List<TzlbVo> visitR = visitListHospService.findBy(ksbh, begindate, endate);
                     return ResultModel.SuccessListResultModel(visitR);
                 }
                 return ResultModel.failResultModel("必要参数未传");

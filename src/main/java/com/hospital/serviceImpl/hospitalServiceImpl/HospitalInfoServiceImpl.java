@@ -191,7 +191,7 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         if (StringUtils.hasText(platdeptid)) {
             List<DoctorPbVo> newList = new ArrayList<>();
-            List<DoctorPbVo> list = hospitalInfoDao.getListDoctorPb(platdeptid);
+            List<DoctorPbVo> list = hospitalInfoDao.getListDoctorPb(platdeptid);//获取还有预约的排班信息
             List<String> holidaysList = this.numidService.getHolidays();
             for (DoctorPbVo tem : list) {
                 if (tem == null) {
@@ -212,7 +212,7 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
                             sourceNum += Integer.parseInt(numSourceVotemp.getCount());
                         }
                     }
-                    tem.setSchdate(sdf.parse(tem.getAppdate()));
+                    tem.setSchdate(sdf.parse(tem.getAppdate())); //排班日期转换
                     tem.setNumcount(sourceNum + "");
                     if (tem.getNumremain() == null || "0".equals(tem.getNumremain())) {
                         continue;
@@ -221,7 +221,26 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
-                tem.setSchstate("0");
+
+                // -------------------2019-09-16 添加 停诊 状态信息-------------------------------
+                if(null != tem.getDocid()){
+                    int aa=0;
+                    if(tem.getAmpm().equals("1")){ //如果是早上
+
+                         aa= hospitalInfoDao.getSwSfTz(tem);
+                    }else if(tem.getAmpm().equals("2")){
+                        aa= hospitalInfoDao.getXwSfTz(tem);
+                    }
+                    if(aa>0){ //停诊
+                        tem.setSchstate("1");
+                    }else{ //正常
+                        tem.setSchstate("0");
+                    }
+
+                }
+                // -------------------2019-09-16 添加 停诊 状态信息--------------------------------
+
+
 
                 if (tem.getDocid() == null) {
                     tem.setDocname("普通医生");
@@ -248,6 +267,50 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
                 }
                 newList.add(tem);
             }
+
+
+            // -------------------2019-09-02 添加 号源已挂满 的专家信息--------------------------------
+            List<DoctorPbVo> numIDIsNullList = new ArrayList<>();
+            List<JlxhVo> jlxhList = hospitalInfoDao.getSpeYzPbk(platdeptid); //获取专家一周排班库
+            if(jlxhList!=null && !jlxhList.isEmpty()){
+                for(JlxhVo jlxhVo:jlxhList){
+                    int aa = hospitalInfoDao.getSpeYyPbmx(jlxhVo.getJlxh()); //先判断是否有该排班
+                    if(aa>0){
+                        //有排班再判断yybz=0的数据，0条数据说明已全部预约，则要查出提示“已挂满”
+                        int bb = hospitalInfoDao.getSpeYybz(jlxhVo.getJlxh());
+                        if(bb==0){
+                           DoctorPbVo doctorPbVo =  hospitalInfoDao.getSpeYsxx(jlxhVo.getJlxh());//获取被全部预约的专家信息唯一的
+                            doctorPbVo.setTitle(PositionTitle.getCode(doctorPbVo.getTitle())+"");
+                            try {
+                                doctorPbVo.setSchdate(sdf.parse(doctorPbVo.getAppdate())); //排班日期转换
+                            } catch (ParseException e) {
+                                e.printStackTrace();
+                            }
+                            List<NumSourceVo> numSourceVos = getCount(doctorPbVo.getSchid(), doctorPbVo.getAmpm());
+                            Integer sourceNum = 0;
+                            for (NumSourceVo numSourceVotemp : numSourceVos) {
+                                if ("0".equals(numSourceVotemp.getYybz())) {
+                                    doctorPbVo.setNumremain(numSourceVotemp.getCount());
+                                    sourceNum += Integer.parseInt(numSourceVotemp.getCount());
+                                }
+                                if ("1".equals(numSourceVotemp.getYybz())) {
+                                    sourceNum += Integer.parseInt(numSourceVotemp.getCount());
+                                }
+                            }
+                            doctorPbVo.setNumcount(sourceNum + "");
+                            doctorPbVo.setNumremain("0");
+                            doctorPbVo.setSchstate("0");
+
+                            numIDIsNullList.add(doctorPbVo);
+                        }
+
+                    }
+                }
+            }
+            //------------------- 2019-09-02 添加 号源已挂满 的专家信息------------------------
+
+            newList.addAll(numIDIsNullList);
+
             return newList;
         }
         return null;
@@ -278,12 +341,30 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
                     }
                 }
                 temp.setSchdate(new Date());
+                temp.setAppdate(DateUtil.dateToString(new Date()));
                 temp.setNumcount(sourceNum + "");
-                temp.setSchstate("0");
                 if (temp.getNumremain() == null) {
                     temp.setNumremain(0 + "");
                     continue;
                 }
+
+                // -------------------2019-09-16 添加 停诊 状态信息-------------------------------
+                if(null != temp.getDocid()){
+                    int aa=0;
+                    if(temp.getAmpm().equals("1")){ //如果是早上
+
+                        aa= hospitalInfoDao.getSwSfTz(temp);
+                    }else if(temp.getAmpm().equals("2")){
+                        aa= hospitalInfoDao.getXwSfTz(temp);
+                    }
+                    if(aa>0){ //停诊
+                        temp.setSchstate("1");
+                    }else{ //正常
+                        temp.setSchstate("0");
+                    }
+
+                }
+                // -------------------2019-09-16 添加 停诊 状态信息--------------------------------
 
                 if (temp.getDocid() == null) {
 
@@ -306,6 +387,50 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
                 }
                 listPb.add(temp);
             }
+
+            // -------------------2019-09-02 添加号源已挂满的专家信息--------------------------------
+            List<DoctorPbVo> numIDIsNullList = new ArrayList<>();
+            List<JlxhVo> jlxhList = hospitalInfoDao.getSpeYzPbk(ksdm); //获取专家当天排班库
+            if(jlxhList!=null && !jlxhList.isEmpty()){
+                for(JlxhVo jlxhVo:jlxhList){
+
+                    if (jlxhVo.getXq() != DateUtil.getWeekOfDate()) {  //判断是否当天
+                        continue;
+                    }
+
+                    int aa = hospitalInfoDao.getSpeYyPbmx(jlxhVo.getJlxh()); //先判断是否有该排班
+                    if(aa>0){
+                        //有排班再判断yybz=0的数据，0条数据说明已全部预约，则要查出提示“已挂满”
+                        int bb = hospitalInfoDao.getSpeYybz(jlxhVo.getJlxh());
+                        if(bb==0){
+                            DoctorPbVo doctorPbVo =  hospitalInfoDao.getSpeYsxx(jlxhVo.getJlxh());//获取被全部预约的专家信息唯一的
+                            doctorPbVo.setTitle(PositionTitle.getCode(doctorPbVo.getTitle())+"");
+                            doctorPbVo.setSchdate(new Date()); //排班日期转换
+                            List<NumSourceVo> numSourceVos = getCount(doctorPbVo.getSchid(), doctorPbVo.getAmpm());
+                            Integer sourceNum = 0;
+                            for (NumSourceVo numSourceVotemp : numSourceVos) {
+                                if ("0".equals(numSourceVotemp.getYybz())) {
+                                    doctorPbVo.setNumremain(numSourceVotemp.getCount());
+                                    sourceNum += Integer.parseInt(numSourceVotemp.getCount());
+                                }
+                                if ("1".equals(numSourceVotemp.getYybz())) {
+                                    sourceNum += Integer.parseInt(numSourceVotemp.getCount());
+                                }
+                            }
+                            doctorPbVo.setNumcount(sourceNum + "");
+                            doctorPbVo.setNumremain("0");
+                            doctorPbVo.setSchstate("0");
+
+                            numIDIsNullList.add(doctorPbVo);
+                        }
+
+                    }
+                }
+            }
+            //------------------- 2019-09-02 添加号源已挂满的专家信息------------------------
+
+            listPb.addAll(numIDIsNullList);
+
             return listPb;
         }
         return null;

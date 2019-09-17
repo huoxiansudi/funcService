@@ -15,7 +15,7 @@ import java.util.List;
 
 public interface VisitListHospService {
 
-    List<TzlbVo> findBy(String schid, String begindate, String endate);
+    List<TzlbVo> findBy(String ksbh, String begindate, String endate);
     List<JzlbVo> findByOrderId( String orderid, String bdate, String edate);
     List<SubscribeListVo> findAllBySfzh(String sfzh,String zt,String orderid);
 

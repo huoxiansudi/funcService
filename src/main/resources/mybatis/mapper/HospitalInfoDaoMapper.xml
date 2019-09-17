@@ -87,6 +87,11 @@
         <result column="wz" property="wz"/>
     </resultMap>
 
+    <resultMap id="jlxhVoMap" type="com.hospital.out.hospital.JlxhVo">
+        <result column="jlxh" property="jlxh"/>
+        <result column="xq" property="xq"/>
+    </resultMap>
+
     <select id="selectKsxx" resultMap="ksxxVoMap">
         select ksdm,ksmc,wdksdm,wdksjs,wz from gy_ksdm where wsks=1
     </select>
@@ -140,6 +145,42 @@
             and d.ghsjlb = #{ampm}
         </if>
     </select>
+
+    <!-- 2019-09-02 添加号源已挂满的专家信息 -->
+    <select id="getSpeYzPbk" resultMap="jlxhVoMap" parameterType="java.lang.String">
+        select jlxh,xq from gh_yzpbk  where ksdm=#{platdeptid} and ysgh is not null
+    </select>
+
+    <select id="getSpeYyPbmx" resultType="java.lang.Integer" parameterType="java.lang.String">
+        select count(*) from gh_yypbmx  where pbjlxh=#{jlxh}
+    </select>
+
+    <select id="getSpeYybz" resultType="java.lang.Integer" parameterType="java.lang.String">
+        select count(*) from gh_yypbmx  where pbjlxh=#{jlxh} AND yybz=0
+    </select>
+
+    <select id="getSpeYsxx" resultMap="DoctorPbVo" parameterType="java.lang.String">
+        select DISTINCT (A.jlxh) AS pbCode,
+        to_char((case when
+        (A.xq - case when func_get_week='星期一' then '1' when func_get_week='星期二' then '2' when func_get_week='星期三' then '3' when func_get_week='星期四' then '4'  when func_get_week='星期五' then '5' when func_get_week='星期六' then '6' when func_get_week='星期日' then '7'   end)
+        >0 then  (A.xq - case when func_get_week='星期一' then '1' when func_get_week='星期二' then '2' when func_get_week='星期三' then '3' when func_get_week='星期四' then '4'  when func_get_week='星期五' then '5' when func_get_week='星期六' then '6' when func_get_week='星期日' then '7'   end)
+        when (A.xq - case when func_get_week='星期一' then '1' when func_get_week='星期二' then '2' when func_get_week='星期三' then '3' when func_get_week='星期四' then '4'  when func_get_week='星期五' then '5' when func_get_week='星期六' then '6' when func_get_week='星期日' then '7'   end)
+        &lt;= 0 then  7+ (A.xq - case when func_get_week='星期一' then '1' when func_get_week='星期二' then '2' when func_get_week='星期三' then '3' when func_get_week='星期四' then '4'  when func_get_week='星期五' then '5' when func_get_week='星期六' then '6' when func_get_week='星期日' then '7'   end)
+        end)+sysdate,'yyyy-mm-dd') appdate,
+        decode(FUN_GET_GH_MZLBMC(A.MZLBXH),'普通','1','专家','2','名医','3','2') AS schType,
+        B.ghsjlb AS timeType,
+        nvl(F.ghf,0) regfee,
+        decode(C.jiagelb,'3',nvl(F.zlf_et,0),nvl(F.zlf,0)) treatfee,
+        A.ysgh AS docCode,
+        A.ksdm AS depCode,
+        D.xm,D.xb, E.mc,C.ksmc,
+        0 numcount,
+        0 numremain
+        FROM gh_yzpbk A,gh_yypbmx B,gy_ksdm C,gy_zgxx D,gy_gydm E,gh_mzlbk F
+        where A.jlxh=B.pbjlxh AND  A.ksdm=C.ksdm AND A.ysgh=D.zgid AND D.zc=E.dm AND A.mzlbxh =F.mzlbxh
+        AND E.dmlb=13 AND A.jlxh=#{jlxh}
+    </select>
+    <!-- 2019-09-02 添加号源已挂满的专家信息 -->
 
     <!-- 修改前版本 -->
     <select id="getListDoctorPb" resultMap="DoctorPbVo" parameterType="java.lang.String">
@@ -692,5 +733,18 @@
 
     <select id="getJzXH" resultType="java.lang.String" parameterType="java.lang.String">
           select jzxh from zj_jzxx where jlxh = #{jlxh}
+    </select>
+
+    <select id="getSwSfTz" resultType="java.lang.Integer" parameterType="com.hospital.out.hospital.DoctorPbVo">
+        SELECT count(1) FROM GH_MBZHGL a,gh_yzpbk b
+         where a.ksdm=b.ksdm and a.ysgh=b.ysgh and a.xq=b.xq --and s.rq between a.ksrq and a.jsrq
+         and a.czrq > sysdate-90 and b.jlxh=#{schid} and a.ksdm=#{deptid} and a.ysgh=#{docid}
+         and  to_date(#{appdate},'yyyy-MM-dd') between a.ksrq and a.jsrq and a.swjsh &lt; 0
+    </select>
+    <select id="getXwSfTz" resultType="java.lang.Integer" parameterType="com.hospital.out.hospital.DoctorPbVo">
+        SELECT count(1) FROM GH_MBZHGL a,gh_yzpbk b
+        where a.ksdm=b.ksdm and a.ysgh=b.ysgh and a.xq=b.xq --and s.rq between a.ksrq and a.jsrq
+        and a.czrq > sysdate-90 and b.jlxh=#{schid} and a.ksdm=#{deptid} and a.ysgh=#{docid}
+        and  to_date(#{appdate},'yyyy-MM-dd') between a.ksrq and a.jsrq and a.xwjsh &lt; 0
     </select>
 </mapper>

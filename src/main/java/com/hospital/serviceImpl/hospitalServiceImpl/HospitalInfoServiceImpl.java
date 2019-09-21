@@ -245,6 +245,7 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
                 if (tem.getDocid() == null) {
                     tem.setDocname("普通医生");
                     tem.setDocid("0");
+                    tem.setSchstate("0");
                     List<String> etList = numidService.getETksdm();
                     String holidayFee = "";
                     if(etList !=null && etList.contains(platdeptid)){
@@ -367,6 +368,8 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
                 // -------------------2019-09-16 添加 停诊 状态信息--------------------------------
 
                 if (temp.getDocid() == null) {
+
+                    temp.setSchstate("0");
 
                     List<String> etList = numidService.getETksdm();
                     String holidayFee = "";

@@ -24,10 +24,32 @@ import java.util.*;
 @Service
 public class HospitalInfoServiceImpl implements HospitalInfoService {
 
+    @Value("${hospital.yylx}")
+    private String yylx;
 
     @Value("${doctor.url}")
     private String doctorUrl;
 
+    @Value("${pay.czgh}")
+    private String czgh;
+
+    @Value("${hospital.hytfybh}")
+    private String hytfybh;
+
+    @Value("${hospital.hdfybh}")
+    private String hdfybh;
+
+    @Value("${hospital.xkfybh}")
+    private String xkfybh;
+
+    @Value("${hospital.mchyt}")
+    private String mchyt;
+
+    @Value("${hospital.mchd}")
+    private String mchd;
+
+    @Value("${hospital.mcxk}")
+    private String mcxk;
 
 
     @Autowired
@@ -40,11 +62,11 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
     public int updateKsxx() {
 
         List<KsxxVo> ksxxVoList = hospitalInfoDao.selectKsxx();
-        for (KsxxVo ksxxVo:ksxxVoList) {
+        for (KsxxVo ksxxVo : ksxxVoList) {
 
             //判断web_ghksxx是否有信息
-            int aa= hospitalInfoDao.selectWebKsxx(ksxxVo.getKsdm());
-            if(aa==0){
+            int aa = hospitalInfoDao.selectWebKsxx(ksxxVo.getKsdm());
+            if (aa == 0) {
                 //添加信息到web_ghksxx中
                 int bb = hospitalInfoDao.insertWebKsxx(ksxxVo);
             }
@@ -223,23 +245,22 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
                 }
 
                 // -------------------2019-09-16 添加 停诊 状态信息-------------------------------
-                if(null != tem.getDocid()){
-                    int aa=0;
-                    if(tem.getAmpm().equals("1")){ //如果是早上
+                if (null != tem.getDocid()) {
+                    int aa = 0;
+                    if (tem.getAmpm().equals("1")) { //如果是早上
 
-                         aa= hospitalInfoDao.getSwSfTz(tem);
-                    }else if(tem.getAmpm().equals("2")){
-                        aa= hospitalInfoDao.getXwSfTz(tem);
+                        aa = hospitalInfoDao.getSwSfTz(tem);
+                    } else if (tem.getAmpm().equals("2")) {
+                        aa = hospitalInfoDao.getXwSfTz(tem);
                     }
-                    if(aa>0){ //停诊
+                    if (aa > 0) { //停诊
                         tem.setSchstate("1");
-                    }else{ //正常
+                    } else { //正常
                         tem.setSchstate("0");
                     }
 
                 }
                 // -------------------2019-09-16 添加 停诊 状态信息--------------------------------
-
 
 
                 if (tem.getDocid() == null) {
@@ -248,9 +269,9 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
                     tem.setSchstate("0");
                     List<String> etList = numidService.getETksdm();
                     String holidayFee = "";
-                    if(etList !=null && etList.contains(platdeptid)){
+                    if (etList != null && etList.contains(platdeptid)) {
                         holidayFee = getHolidaysCostET(DateUtil.formatToDateStr(tem.getAppdate()), holidaysList);
-                    }else {
+                    } else {
                         holidayFee = getHolidaysCost(DateUtil.formatToDateStr(tem.getAppdate()), holidaysList);
                     }
                     if (StringUtils.hasText(holidayFee)) {
@@ -258,7 +279,7 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
                     }
                     Integer rqpd = DateUtil.getWeekOfDateFortmatt(tem.getAppdate());
                     if ((rqpd == 7) || (rqpd == 6)) {
-                        String jzFeel = pdWeekEnd(rqpd + "",platdeptid);
+                        String jzFeel = pdWeekEnd(rqpd + "", platdeptid);
                         if (jzFeel != null) {
                             tem.setFee(jzFeel);
                         }
@@ -273,15 +294,15 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
             // -------------------2019-09-02 添加 号源已挂满 的专家信息--------------------------------
             List<DoctorPbVo> numIDIsNullList = new ArrayList<>();
             List<JlxhVo> jlxhList = hospitalInfoDao.getSpeYzPbk(platdeptid); //获取专家一周排班库
-            if(jlxhList!=null && !jlxhList.isEmpty()){
-                for(JlxhVo jlxhVo:jlxhList){
+            if (jlxhList != null && !jlxhList.isEmpty()) {
+                for (JlxhVo jlxhVo : jlxhList) {
                     int aa = hospitalInfoDao.getSpeYyPbmx(jlxhVo.getJlxh()); //先判断是否有该排班
-                    if(aa>0){
+                    if (aa > 0) {
                         //有排班再判断yybz=0的数据，0条数据说明已全部预约，则要查出提示“已挂满”
                         int bb = hospitalInfoDao.getSpeYybz(jlxhVo.getJlxh());
-                        if(bb==0){
-                           DoctorPbVo doctorPbVo =  hospitalInfoDao.getSpeYsxx(jlxhVo.getJlxh());//获取被全部预约的专家信息唯一的
-                            doctorPbVo.setTitle(PositionTitle.getCode(doctorPbVo.getTitle())+"");
+                        if (bb == 0) {
+                            DoctorPbVo doctorPbVo = hospitalInfoDao.getSpeYsxx(jlxhVo.getJlxh());//获取被全部预约的专家信息唯一的
+                            doctorPbVo.setTitle(PositionTitle.getCode(doctorPbVo.getTitle()) + "");
                             try {
                                 doctorPbVo.setSchdate(sdf.parse(doctorPbVo.getAppdate())); //排班日期转换
                             } catch (ParseException e) {
@@ -350,17 +371,17 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
                 }
 
                 // -------------------2019-09-16 添加 停诊 状态信息-------------------------------
-                if(null != temp.getDocid()){
-                    int aa=0;
-                    if(temp.getAmpm().equals("1")){ //如果是早上
+                if (null != temp.getDocid()) {
+                    int aa = 0;
+                    if (temp.getAmpm().equals("1")) { //如果是早上
 
-                        aa= hospitalInfoDao.getSwSfTz(temp);
-                    }else if(temp.getAmpm().equals("2")){
-                        aa= hospitalInfoDao.getXwSfTz(temp);
+                        aa = hospitalInfoDao.getSwSfTz(temp);
+                    } else if (temp.getAmpm().equals("2")) {
+                        aa = hospitalInfoDao.getXwSfTz(temp);
                     }
-                    if(aa>0){ //停诊
+                    if (aa > 0) { //停诊
                         temp.setSchstate("1");
-                    }else{ //正常
+                    } else { //正常
                         temp.setSchstate("0");
                     }
 
@@ -373,7 +394,7 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
 
                     List<String> etList = numidService.getETksdm();
                     String holidayFee = "";
-                    if (etList !=null && etList.contains(ksdm)) {
+                    if (etList != null && etList.contains(ksdm)) {
                         holidayFee = getHolidaysCostET(DateUtil.getDayStr(), holidaysList);
                     } else {
                         holidayFee = getHolidaysCost(DateUtil.getDayStr(), holidaysList);
@@ -394,20 +415,20 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
             // -------------------2019-09-02 添加号源已挂满的专家信息--------------------------------
             List<DoctorPbVo> numIDIsNullList = new ArrayList<>();
             List<JlxhVo> jlxhList = hospitalInfoDao.getSpeYzPbk(ksdm); //获取专家当天排班库
-            if(jlxhList!=null && !jlxhList.isEmpty()){
-                for(JlxhVo jlxhVo:jlxhList){
+            if (jlxhList != null && !jlxhList.isEmpty()) {
+                for (JlxhVo jlxhVo : jlxhList) {
 
                     if (jlxhVo.getXq() != DateUtil.getWeekOfDate()) {  //判断是否当天
                         continue;
                     }
 
                     int aa = hospitalInfoDao.getSpeYyPbmx(jlxhVo.getJlxh()); //先判断是否有该排班
-                    if(aa>0){
+                    if (aa > 0) {
                         //有排班再判断yybz=0的数据，0条数据说明已全部预约，则要查出提示“已挂满”
                         int bb = hospitalInfoDao.getSpeYybz(jlxhVo.getJlxh());
-                        if(bb==0){
-                            DoctorPbVo doctorPbVo =  hospitalInfoDao.getSpeYsxx(jlxhVo.getJlxh());//获取被全部预约的专家信息唯一的
-                            doctorPbVo.setTitle(PositionTitle.getCode(doctorPbVo.getTitle())+"");
+                        if (bb == 0) {
+                            DoctorPbVo doctorPbVo = hospitalInfoDao.getSpeYsxx(jlxhVo.getJlxh());//获取被全部预约的专家信息唯一的
+                            doctorPbVo.setTitle(PositionTitle.getCode(doctorPbVo.getTitle()) + "");
                             doctorPbVo.setSchdate(new Date()); //排班日期转换
                             List<NumSourceVo> numSourceVos = getCount(doctorPbVo.getSchid(), doctorPbVo.getAmpm());
                             Integer sourceNum = 0;
@@ -440,6 +461,7 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
     }
 
     @Override
+    @Transactional
     public int updateXhb(String tableName) {
         return hospitalInfoDao.updateXhb(tableName);
     }
@@ -523,13 +545,6 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
     @Transactional
     public String insertCurrentGHKVo(RegistSettleVo vo) {
         if (vo != null) {
-            if (StringUtils.hasText(vo.getPreid()) && StrUtil.isInteger(vo.getPreid())) {
-                Integer intUP = hospitalInfoDao.updateSucceGhk(vo.getPreid(), vo.getRegid());
-                if (intUP < 0) {
-                    return "状态更新失败!!!!";
-                }
-            }
-
             CurrentGhkVo currentGhkvo = hospitalInfoDao.selectCurrentByPBXH(vo.getNumid());
             if (currentGhkvo == null) {
                 return "获取不到当天号源信息";
@@ -539,15 +554,16 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
             if (clincVo == null) {
                 return "获取不到当天排班信息";
             }
+
             currentGhkvo.setZlf(vo.getPayamount());
             currentGhkvo.setPbxh(clincVo.getPbxh());
             if (currentGhkvo.getKsmc() != null) {
-                if (currentGhkvo.getKsmc().indexOf("宏迪") != -1) {
-                    currentGhkvo.setFybh("0");
-                } else if (currentGhkvo.getKsmc().indexOf("荷叶塘") != -1) {
-                    currentGhkvo.setFybh("3");
+                if (currentGhkvo.getKsmc().indexOf(mchd) != -1) {
+                    currentGhkvo.setFybh(hdfybh);
+                } else if (currentGhkvo.getKsmc().indexOf(mchyt) != -1) {
+                    currentGhkvo.setFybh(hytfybh);
                 } else {
-                    currentGhkvo.setFybh("4");
+                    currentGhkvo.setFybh(xkfybh);
                 }
             }
             /*int t = hospitalInfoDao.updateXhb("GH_GHK");
@@ -571,9 +587,65 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
             currentGhkvo.setBrxm(patVo.getPatname());
             currentGhkvo.setBrxz("1");//(patVo.getBrxzdm() == null ? "1" : patVo.getBrxzdm());
             currentGhkvo.setJzcs(((patVo.getJzcs() == null ? 0 : Integer.valueOf(patVo.getJzcs())) + 1) + "");
-            currentGhkvo.setCzgh("AUTO8");
+            currentGhkvo.setCzgh(czgh);
             currentGhkvo.setCzrq(DateUtil.formatDateString(new Date()));
             currentGhkvo.setThbz("0");
+
+            //如果有传入预约单编号，则把该预约单状态改成已取号
+            if (StringUtils.hasText(vo.getPreid()) && StrUtil.isInteger(vo.getPreid())) {
+                Integer intUP = hospitalInfoDao.updateSucceGhk(vo.getPreid(), vo.getRegid());
+                if (intUP < 0) {
+                    return "状态更新失败!!!!";
+                }
+            } else {
+
+                //--------------------------2019-09-25 若没有传入预约单编号 则新增一条 预约信息----------------------
+                NumOrigin numDo = hospitalInfoDao.getDoctorPbVoByNumId(vo.getNumid());
+
+                GhkVo ghkVo = new GhkVo();
+                //ghkVo.setCheckid(yyghInVo.getPass());
+                ghkVo.setGhxh(vo.getNumno());
+                ghkVo.setJzkh(vo.getPatid());
+                ghkVo.setYylb(yylx);//网上预约类型都是3
+                ghkVo.setSfzh(patVo.getIdcard());
+                ghkVo.setXb(patVo.getPatsex());
+                ghkVo.setXm(patVo.getPatname());
+                ghkVo.setNumid(vo.getNumid());
+                ghkVo.setZt("0");
+                ghkVo.setJtzz(patVo.getAddress());
+                ghkVo.setThbz("0");
+                if (numDo != null) {
+                    ghkVo.setKsdm(numDo.getDeptCode());
+                    ghkVo.setMzlbxh(numDo.getMzlbxh());
+                    ghkVo.setYsgh(numDo.getDocterCode());
+
+                }
+                ghkVo.setLxdh(patVo.getMobileno());
+                ghkVo.setPbxh(vo.getSchid());
+                GregorianCalendar ca = new GregorianCalendar();
+                ghkVo.setYysj(ca.get(GregorianCalendar.AM_PM) + 1 + "");
+                ghkVo.setUserid(vo.getRegid());
+                ghkVo.setXxczid(vo.getOper());
+                ghkVo.setDjrq(DateUtil.getCurrentDate());
+                ghkVo.setThbz("0");
+                ghkVo.setCzgh(czgh);
+                ghkVo.setYyrq1(DateUtil.formatCurrent());
+                ghkVo.setYyrq2(DateUtil.getCurrentDate());
+
+                int t = hospitalInfoDao.updateXhb("GH_MZYYK");
+                if (t > 0) {
+                    int yyxh = hospitalInfoDao.selectXhb("GH_MZYYK");
+                    ghkVo.setYyxh(yyxh + "");
+                }
+
+                int temp = hospitalInfoDao.insertMzYyk(ghkVo);
+                if (temp > 0) {
+                    System.out.println("加入预约库成功");
+                }
+                //--------------------------2019-09-25 若没有传入预约单编号 则新增一条 预约信息----------------------
+
+            }
+
             Integer voip = hospitalInfoDao.insertGHKByCurrentGhkVo(currentGhkvo);
             if (voip > 0) {
                 //  hospitalInfoDao.lockNum(vo.getNumid());
@@ -651,8 +723,8 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
             List<String> etList = numidService.getETksdm();
             String holidayFee = "";
             if (etList != null && etList.contains(temp.getDeptCode())) {
-                holidayFee =getHolidaysCostET(DateUtil.getDayStr(), holidaysList);
-           }else{
+                holidayFee = getHolidaysCostET(DateUtil.getDayStr(), holidaysList);
+            } else {
                 holidayFee = getHolidaysCost(DateUtil.getDayStr(), holidaysList);
             }
             if (StringUtils.hasText(holidayFee)) {
@@ -662,7 +734,7 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
             //判断双休日的普通门诊的挂号费
             Integer rqpd = DateUtil.getWeekOfDate();
             if (rqpd == 7 || rqpd == 6) {
-                String jzFeel = pdWeekEnd(rqpd + "",temp.getDeptCode());
+                String jzFeel = pdWeekEnd(rqpd + "", temp.getDeptCode());
                 if (jzFeel != null) {
                     temp.setTreatfee(Double.parseDouble(jzFeel));
                 }

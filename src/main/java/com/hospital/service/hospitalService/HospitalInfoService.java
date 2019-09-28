@@ -67,6 +67,7 @@ public interface HospitalInfoService {
 
     List<DoctorPbVo> selectTheDayPB(String ksdm, String xq);
 
+    @Transactional
     int updateXhb(String tableName);
     int selectXhb(String tableName);
 

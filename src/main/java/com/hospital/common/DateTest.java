@@ -2,8 +2,7 @@ package com.hospital.common;
 
 import org.assertj.core.util.Lists;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 /**
@@ -27,12 +26,15 @@ public class DateTest {
         System.out.println( "Full Name: " + fullName.orElseGet( () -> "[none]" ) );
         System.out.println( fullName.map( s -> "Hey " + s + "!" ).orElse( "Hey Stranger!" ) );*/
 
-        Method method = DateTest.class.getMethod( "main", String[].class );
+        /*Method method = DateTest.class.getMethod( "main", String[].class );
         for( final Parameter parameter: method.getParameters() ) {
             System.out.println( "Parameter: " + parameter.getName() );
 
-        }
+        }*/
 
+        GregorianCalendar ca = new GregorianCalendar();
+        String a = ca.get(GregorianCalendar.AM_PM)+1+"";
+        System.out.println(a);
 
     }
 

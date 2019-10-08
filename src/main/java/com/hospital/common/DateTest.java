@@ -35,6 +35,7 @@ public class DateTest {
         GregorianCalendar ca = new GregorianCalendar();
         String a = ca.get(GregorianCalendar.AM_PM)+1+"";
         System.out.println(a);
+        System.out.println(DateUtil.getCurrentDate()+" 当天挂号新增一条预约信息成功");
 
     }
 

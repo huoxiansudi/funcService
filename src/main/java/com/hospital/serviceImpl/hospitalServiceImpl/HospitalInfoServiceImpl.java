@@ -600,7 +600,6 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
             } else {
 
                 //--------------------------2019-09-25 若没有传入预约单编号 则新增一条 预约信息----------------------
-                NumOrigin numDo = hospitalInfoDao.getDoctorPbVoByNumId(vo.getNumid());
 
                 GhkVo ghkVo = new GhkVo();
                 //ghkVo.setCheckid(yyghInVo.getPass());
@@ -611,15 +610,12 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
                 ghkVo.setXb(patVo.getPatsex());
                 ghkVo.setXm(patVo.getPatname());
                 ghkVo.setNumid(vo.getNumid());
-                ghkVo.setZt("0");
+                ghkVo.setZt("1");
                 ghkVo.setJtzz(patVo.getAddress());
                 ghkVo.setThbz("0");
-                if (numDo != null) {
-                    ghkVo.setKsdm(numDo.getDeptCode());
-                    ghkVo.setMzlbxh(numDo.getMzlbxh());
-                    ghkVo.setYsgh(numDo.getDocterCode());
-
-                }
+                ghkVo.setKsdm(currentGhkvo.getKsdm());
+                ghkVo.setMzlbxh(currentGhkvo.getMzlbxh());
+                ghkVo.setYsgh(currentGhkvo.getYsgh());
                 ghkVo.setLxdh(patVo.getMobileno());
                 ghkVo.setPbxh(vo.getSchid());
                 GregorianCalendar ca = new GregorianCalendar();
@@ -631,6 +627,7 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
                 ghkVo.setCzgh(czgh);
                 ghkVo.setYyrq1(DateUtil.formatCurrent());
                 ghkVo.setYyrq2(DateUtil.getCurrentDate());
+                ghkVo.setJkxx("微信当天挂号新增的预约信息，以解决现场挂号序号冲突");
 
                 int t = hospitalInfoDao.updateXhb("GH_MZYYK");
                 if (t > 0) {
@@ -640,7 +637,7 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
 
                 int temp = hospitalInfoDao.insertMzYyk(ghkVo);
                 if (temp > 0) {
-                    System.out.println("加入预约库成功");
+                    System.out.println(DateUtil.getCurrentDate()+" 当天挂号新增一条预约信息成功");
                 }
                 //--------------------------2019-09-25 若没有传入预约单编号 则新增一条 预约信息----------------------
 

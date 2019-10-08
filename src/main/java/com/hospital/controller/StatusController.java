@@ -186,11 +186,7 @@ public class StatusController {
                 }
                 yyghInVo.setVisitdate(yyjzrq);
 
-                /*//判断号源是否存在
-                PbHyVo pbHyVo = numidService.getNumid(yyghInVo);
-                //预约
-                //挂号*/
-
+                //判断号源是否存在
                 NumOrigin numDo = hospitalInfoService.getDoctorPbVoByNumId(yyghInVo.getNumid());
 
                 //判断用户信息是否存在

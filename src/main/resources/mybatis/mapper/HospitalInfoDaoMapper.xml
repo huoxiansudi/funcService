@@ -491,6 +491,9 @@
             <if test="djrq !=null">
                 DJRQ,
             </if>
+            <if test="jkxx !=null">
+                JKXX,
+            </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="yyxh != null">
@@ -562,6 +565,9 @@
             </if>
             <if test="djrq !=null">
                 to_date(#{djrq},'yyyy-MM-dd hh24:mi:ss'),
+            </if>
+            <if test="jkxx !=null">
+                #{jkxx},
             </if>
         </trim>
     </insert>

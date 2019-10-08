@@ -29,10 +29,19 @@ public class GhkVo {
     private String jtzz;
     private String xxczid;
     private String djrq;
+    private String  jkxx;
 
     private String czgh;
 
     private String thbz;//退号标识
+
+    public String getJkxx() {
+        return jkxx;
+    }
+
+    public void setJkxx(String jkxx) {
+        this.jkxx = jkxx;
+    }
 
     public String getCzgh() {
         return czgh;

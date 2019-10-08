@@ -84,7 +84,7 @@
     <logger name="com.sun" level="debug"/>
     <!-- 日志输出级别 -->
     <root level="info">
-       <appender-ref ref="STDOUT"/>
+       <!--<appender-ref ref="STDOUT"/>-->
         <appender-ref ref="DAYERROR"/>
         <appender-ref ref="DAYINFO"/>
     </root>

@@ -61,7 +61,9 @@ public interface HospitalInfoDao {
 
     List<NumSourceVo> getCount(@Param(value = "pbjlxh") String pbjlxh,@Param(value = "ampm") String ampm);
 
-    List<PbHyVo> getPbHyVo(@Param(value = "schid") String schid, @Param(value = "ampm") String ampm);
+    int getMzyyCount(@Param(value = "pbjlxh") String pbjlxh,@Param(value = "ampm") String ampm,@Param(value = "appdate") String appdate);
+
+    List<PbHyVo> getPbHyVo(@Param(value = "schid") String schid, @Param(value = "ampm") String ampm,@Param(value = "schdateStr")String schdateStr);
 
     GhsfVo selectTodayGhsf(@Param("ghInVo") GhInVo ghInVo);
     GhsfVo selectGhsf(@Param("ghInVo") GhInVo ghInVo);
@@ -101,4 +103,6 @@ public interface HospitalInfoDao {
 
     int getSwSfTz(DoctorPbVo doctorPbVo);
     int getXwSfTz(DoctorPbVo doctorPbVo);
+
+    List<GhkVo> getMzyyList(@Param(value = "schid")String schid, @Param(value = "ampm")String ampm,@Param(value = "schdateStr")String schdateStr);
 }

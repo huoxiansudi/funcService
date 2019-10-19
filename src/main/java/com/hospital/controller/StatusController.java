@@ -44,6 +44,8 @@ public class StatusController {
 
     @Value("${pay.czgh}")
     private String czgh;
+    @Value("${hospital.yylx}")
+    private String yylx;
     /*
     @Autowired
     private NumidService numidService;*/
@@ -75,6 +77,22 @@ public class StatusController {
         return null;
     }
 
+    //获取排班（1086--20191019）
+    private static String getSchid(String schid) {
+        if(schid.length()-9>0){
+            schid = schid.substring(0,schid.length()-8);
+        }
+        return schid;
+    }
+
+    //获取日期（1086--20191019）
+    private static String getSchdate(String schid) {
+        if(schid.length()-9>0){
+            schid = schid.substring(schid.length()-8);
+        }
+        return schid;
+    }
+
     /**
      * 测试接口
      * @return
@@ -94,7 +112,6 @@ public class StatusController {
             case "100101"://接口状态监测
                 //更新web_ghksxx
                 //hospitalInfoService.updateKsxx();
-
                 return ResultModel.SuccessResultModel("服务器正常。。。");
             case "100201"://医院信息查询
                 List<HospitalVo> hospitalInfo = hospitalInfoService.getHospitalInfo();
@@ -116,11 +133,12 @@ public class StatusController {
                 if (!(StringUtils.hasText(schid) && StringUtils.hasText(ampm))) {
                     return ResultModel.failResultModel("必传参数没有!!!!");
                 }
-                List<PbHyVo> listPbHyVo = hospitalInfoService.getPbHyVo(schid, ampm);
+                String schidStr=getSchid(schid); //截取日期后的数值
+                String schdateStr=getSchdate(schid); //截取排班后的数值
+                List<PbHyVo> listPbHyVo = hospitalInfoService.getPbHyVo(schidStr, ampm,schdateStr);
                 return ResultModel.SuccessListResultModel(listPbHyVo);
             case "100206":  //患者注册
                 PatientInVo registInVo = objectJson.toJavaObject(PatientInVo.class);
-                //判断是否为空
                 if (registInVo == null || !StringUtils.hasText(registInVo.getPatid()) || !StringUtils.hasText(registInVo.getPatname())
                         || !StringUtils.hasText(registInVo.getPatsex()) || !StringUtils.hasText(registInVo.getIdcard())
                         || !StringUtils.hasText(registInVo.getMobileno()) || !StringUtils.hasText(registInVo.getAddress())) {
@@ -176,31 +194,32 @@ public class StatusController {
                         || !StringUtils.hasText(yyghInVo.getPass()) || !StringUtils.hasText(yyghInVo.getNo())) {
                     return ResultModel.failResultModel("必要参数未传");
                 }
-                PatientInVo patient = new PatientInVo();
-
+                //判断是否为当天号源预约，当天的要排除
                 String yyjzrq = DateUtil.formatToDate(yyghInVo.getVisitdate()); //就诊日期(YYYYMMDD)转换为（yyyy-MM-dd）
-                SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd");
-                String date = fmt.format(new Date()).toString();
+                String date = DateUtil.dateToString(new Date());
                 if (yyjzrq.equals(date)) {
                     return ResultModel.failResultModel("不能预约当天号码");
                 }
                 yyghInVo.setVisitdate(yyjzrq);
 
-                //判断号源是否存在
-                NumOrigin numDo = hospitalInfoService.getDoctorPbVoByNumId(yyghInVo.getNumid());
-
                 //判断用户信息是否存在
-                patient.setPatid(yyghInVo.getPatid());
                 PatientVo patientInfo = hospitalInfoService.selectPatientByJzkh(yyghInVo.getPatid());
                 if (patientInfo == null || patientInfo.getPatid() == null) {
                     return ResultModel.failResultModel(AppointmentCodeState.getCode("CODE_22010002"));
                 }
 
                 GhkVo ghkVo = new GhkVo();
+                //判断号源是否存在
+                NumOrigin numDo = hospitalInfoService.getDoctorPbVoByNumId(yyghInVo.getNumid());
+                if (numDo != null) {
+                    ghkVo.setKsdm(numDo.getDeptCode());
+                    ghkVo.setMzlbxh(numDo.getMzlbxh());
+                    ghkVo.setYsgh(numDo.getDocterCode());
+                }
                 ghkVo.setCheckid(yyghInVo.getPass());
                 ghkVo.setGhxh(yyghInVo.getNo());
                 ghkVo.setJzkh(yyghInVo.getPatid());
-                ghkVo.setYylb("3");//网上预约类型都是3
+                ghkVo.setYylb(yylx);//网上预约类型都是3
                 ghkVo.setSfzh(patientInfo.getIdcard());
                 ghkVo.setXb(patientInfo.getPatsex());
                 ghkVo.setXm(patientInfo.getPatname());
@@ -208,13 +227,9 @@ public class StatusController {
                 ghkVo.setZt("0");
                 ghkVo.setJtzz(patientInfo.getAddress());
                 ghkVo.setThbz("0");
-                if (numDo != null) {
-                    ghkVo.setKsdm(numDo.getDeptCode());
-                    ghkVo.setMzlbxh(numDo.getMzlbxh());
-                    ghkVo.setYsgh(numDo.getDocterCode());
-                }
                 ghkVo.setLxdh(patientInfo.getMobileno());
-                ghkVo.setPbxh(yyghInVo.getSchid());
+                String pbxh=getSchid(yyghInVo.getSchid()); //截取日期后的数值
+                ghkVo.setPbxh(pbxh);
                 ghkVo.setYysj(yyghInVo.getAmpm());
                 ghkVo.setUserid(yyghInVo.getRegid());
                 ghkVo.setXxczid(yyghInVo.getOper());

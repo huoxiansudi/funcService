@@ -1,5 +1,6 @@
 package com.hospital.serviceImpl.hospitalServiceImpl;
 
+import com.alibaba.druid.sql.visitor.functions.Substring;
 import com.hospital.common.*;
 import com.hospital.dao.HospitalInfo.HospitalInfoDao;
 import com.hospital.domain.*;
@@ -162,6 +163,7 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
     }
 
     @Override
+    @Transactional
     public String insertMzYyk(GhkVo ghkVo) {
 
         Integer numState = hospitalInfoDao.selectNumByPbxmxy(ghkVo.getNumid());
@@ -219,27 +221,40 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
                 if (tem == null) {
                     continue;
                 }
+                //根据yybz判断，是否能预约
                 List<NumSourceVo> numSourceVos = getCount(tem.getSchid(), tem.getAmpm());
                 if (numSourceVos == null) {
                     continue;
                 }
-                try {
-                    Integer sourceNum = 0;
-                    for (NumSourceVo numSourceVotemp : numSourceVos) {
-                        if ("0".equals(numSourceVotemp.getYybz())) {
-                            tem.setNumremain(numSourceVotemp.getCount());
-                            sourceNum += Integer.parseInt(numSourceVotemp.getCount());
-                        }
-                        if ("1".equals(numSourceVotemp.getYybz())) {
-                            sourceNum += Integer.parseInt(numSourceVotemp.getCount());
-                        }
+                Integer sourceNum = 0;
+                for (NumSourceVo numSourceVotemp : numSourceVos) {
+                    if ("0".equals(numSourceVotemp.getYybz())) {
+                        tem.setNumremain(numSourceVotemp.getCount());
+                        sourceNum += Integer.parseInt(numSourceVotemp.getCount());
                     }
-                    tem.setSchdate(sdf.parse(tem.getAppdate())); //排班日期转换
-                    tem.setNumcount(sourceNum + "");
-                    if (tem.getNumremain() == null || "0".equals(tem.getNumremain())) {
-                        continue;
+                    if ("1".equals(numSourceVotemp.getYybz())) {
+                        sourceNum += Integer.parseInt(numSourceVotemp.getCount());
                     }
+                }
 
+                tem.setNumcount(sourceNum + ""); //号源总数
+                if (tem.getNumremain() == null || "0".equals(tem.getNumremain())) {
+                    continue;
+                }
+
+                //--------------------2019-10-16 添加 号源是30天的数据-------------------------------
+                //通过判断那一天 gh_mzyyk 是否有数据，如果有则从排班表中删除
+
+                int yyyCount = hospitalInfoDao.getMzyyCount(tem.getSchid(), tem.getAmpm(),tem.getAppdate()); //已预约数
+                int kyyCount = sourceNum - yyyCount;//可预约数量
+                tem.setNumremain(kyyCount+""); //号源可预约数
+
+                //--------------------2019-10-16 添加 号源是30天的数据-------------------------------
+
+
+
+                try {
+                    tem.setSchdate(sdf.parse(tem.getAppdate())); //排班日期转换
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
@@ -332,6 +347,11 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
             //------------------- 2019-09-02 添加 号源已挂满 的专家信息------------------------
 
             newList.addAll(numIDIsNullList);
+
+            for(DoctorPbVo doctorPbVo:newList){
+                String ddd= DateUtil.dateToString2(doctorPbVo.getSchdate());
+                doctorPbVo.setSchid(doctorPbVo.getSchid()+ddd);
+            }
 
             return newList;
         }
@@ -481,12 +501,26 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
     }
 
     @Override
-    public List<PbHyVo> getPbHyVo(String schid, String ampm) {
-        if (StringUtils.hasText(schid) && StringUtils.hasText(ampm)) {
-            List<PbHyVo> list = hospitalInfoDao.getPbHyVo(schid, ampm);
+    public List<PbHyVo> getPbHyVo(String schid, String ampm,String schdateStr) {
+        if (StringUtils.hasText(schid) && StringUtils.hasText(ampm) && StringUtils.hasText(schdateStr)) {
+
+            //--------------------2019-10-16 添加 号源是30天的数据-------------------------------
+
+            //获取那天数据是否有被预约的信息 --获取到 yyrq1,ghxh,yysj,pbxh  把对应的numstate改为1
+            schdateStr = DateUtil.stringDateToString(schdateStr);
+            List<GhkVo> getMzyyXxList = hospitalInfoDao.getMzyyList(schid,ampm,schdateStr);
+            List<PbHyVo> list = hospitalInfoDao.getPbHyVo(schid, ampm,schdateStr);
             for (PbHyVo temp : list) {
                 temp.setNumdate(DateUtil.formatStringDate(temp.getAppdate()));
+                for (GhkVo yyXx : getMzyyXxList) {
+                    if(yyXx.getGhxh().equals(temp.getNumno())){
+                        temp.setNumstate("1"); //把状态设置为1
+                    }
+
+                }
             }
+
+            //--------------------2019-10-16 添加 号源是30天的数据-------------------------------
             return list;
         }
         return null;

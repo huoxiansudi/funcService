@@ -53,7 +53,7 @@ public interface HospitalInfoService {
 
     List<NumSourceVo> getCount(String schid,String ampm);
 
-    List<PbHyVo> getPbHyVo(String schid, String ampm);
+    List<PbHyVo> getPbHyVo(String schid, String ampm,String schdateStr);
 
     @Transactional
     Integer lockNum(String pbmxxh);

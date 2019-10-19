@@ -14,7 +14,6 @@ import java.util.regex.Pattern;
  * Created by fuxf on 2017/7/31.
  */
 public class DateUtil {
-   // private static String pattern = "yyyy-MM-dd HH:mm:ss";
 
     // 第一次调用get将返回null
     private static ThreadLocal threadLocal = new ThreadLocal();
@@ -31,6 +30,13 @@ public class DateUtil {
         return df;
     }
 
+    public static void main(String[] args) throws ParseException {
+        String str1 = DateUtil.dateToString2(new Date());
+
+        Date date = new SimpleDateFormat("yyyyMMdd").parse("2010-10-31");
+        String dateStr = new SimpleDateFormat("yyyy-MM-dd").format(date);
+        System.out.println(dateStr);
+    }
 
     /**
      * 时间转换字符串
@@ -43,17 +49,6 @@ public class DateUtil {
     }
 
 
-
-
-    public static void main(String[] args) {
-       // Date date = new Date();
-        //String str1 = formatDateString(date);
-        //String str2 = formatDateString1(date);
-        Date str1 = formatStringDate("2018-09-26");
-        System.out.println(str1);
-        //System.out.println(str2);
-    }
-
     /**
      * 时间转换字符串
      *
@@ -62,6 +57,34 @@ public class DateUtil {
      */
     public static String dateToString(Date date) {
         return DateFormatUtils.format(date, "yyyy-MM-dd");
+    }
+
+    /**
+     * 时间转换字符串
+     *
+     * @param date
+     * @return
+     */
+    public static String dateToString2(Date date) {
+        return DateFormatUtils.format(date, "yyyyMMdd");
+    }
+
+    /**
+     * 字符串时间转换字符串
+     *
+     * @param dateString
+     * @return
+     */
+    public static String stringDateToString(String dateString) {
+
+        Date date = null;
+        try {
+            date = new SimpleDateFormat("yyyyMMdd").parse(dateString);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        String now = new SimpleDateFormat("yyyy-MM-dd").format(date);
+        return now;
     }
 
     /**

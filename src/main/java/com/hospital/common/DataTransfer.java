@@ -1,6 +1,7 @@
 package com.hospital.common;
 
 import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * Created by jinhs on 2017-11-21.
@@ -19,5 +20,15 @@ public class DataTransfer {
         System.out.println((b1.add(b2).doubleValue()));
         Double sum = Double.parseDouble(getData(var1)) + Double.parseDouble(getData(var2));
         System.out.println(sum);
+String dd = "181090";
+if(dd.length()-5>0){
+    String o = DateUtil.dateToString2(new Date()); //1019
+
+    String ddd = dd.substring(0,dd.length()-4);
+    if(o.equals(ddd)){
+
+        System.out.println(ddd);
+    }
+}
     }
 }

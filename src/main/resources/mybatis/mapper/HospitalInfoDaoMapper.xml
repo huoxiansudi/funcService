@@ -110,7 +110,6 @@
         </trim>
     </insert>
 
-
     <select id="getPbHyVo" resultMap="pbHyVoMap" parameterType="java.lang.String">
         select distinct clinic_date appdate,
         (decode((select substr(jzsjqy,1,5) from gh_jzsjsz where pbjlxh=d.pbjlxh and ksghxh <![CDATA[<= ]]> d.yyghxh and jsghxh <![CDATA[>= ]]> d.yyghxh and ghsjlb=d.ghsjlb),'',decode(d.ghsjlb,1,'08:00','13:00'),
@@ -127,7 +126,31 @@
         <if test="ampm !=null">
             and d.ghsjlb = #{ampm}
         </if>
+        <if test="schdateStr !=null">
+            and clinic_date = #{schdateStr}
+        </if>
     </select>
+    <!--<select id="getPbHyVo" resultMap="pbHyVoMap" parameterType="java.lang.String">
+        select distinct b.clinic_date appdate,
+        (decode((select substr(jzsjqy,1,5) from gh_jzsjsz where pbjlxh=d.pbjlxh and ksghxh <![CDATA[<= ]]> d.yyghxh and jsghxh <![CDATA[>= ]]> d.yyghxh and ghsjlb=d.ghsjlb),'',decode(d.ghsjlb,1,'08:00','13:00'),
+        (select substr(jzsjqy,1,5) from gh_jzsjsz where pbjlxh=d.pbjlxh and ksghxh <![CDATA[<= ]]> d.yyghxh and jsghxh <![CDATA[>= ]]> d.yyghxh and ghsjlb=d.ghsjlb))) ||'~' || (
+        decode((select substr(jzsjqy,7,5) from gh_jzsjsz where pbjlxh=d.pbjlxh and ksghxh <![CDATA[<= ]]> d.yyghxh and jsghxh <![CDATA[>= ]]> d.yyghxh and ghsjlb=d.ghsjlb),'',decode(d.ghsjlb,1,'11:30','16:30'),
+        (select substr(jzsjqy,7,5) from gh_jzsjsz where pbjlxh=d.pbjlxh and ksghxh <![CDATA[<= ]]> d.yyghxh and jsghxh <![CDATA[>= ]]> d.yyghxh and ghsjlb=d.ghsjlb))) deadline,
+        d."PBMXXH",
+        d."YYGHXH",
+        d."YYBZ"
+        from GH_MZYYK a , ,MZYY_SCHEDUL b, GH_YYPBMX d  where d.pbjlxh = b.jlxh
+        AND d."PBJLXH" = a."PBXH"(+)
+        AND d."YYGHXH" = a."GHXH"(+)
+        AND d."GHSJLB" = a."YYSJ"(+)
+        AND to_char(a."YYRQ1"(+),'yyyy-mm-dd hh24:mm:ss') BETWEEN '2019-10-31 00:00:00' AND '2019-10-31 23:59:59'
+        <if test="schid != null">
+            and d.PBJLXH =#{schid}
+        </if>
+        <if test="ampm !=null">
+            and d.ghsjlb = #{ampm}
+        </if>
+    </select>-->
     <select id="selectCurrentNum" resultMap="pbHyVoMap" parameterType="java.lang.String">
         select
         (decode((select substr(jzsjqy,1,5) from gh_jzsjsz where pbjlxh=d.pbjlxh and ksghxh <![CDATA[<= ]]> d.yyghxh and jsghxh <![CDATA[>= ]]> d.yyghxh and ghsjlb=d.ghsjlb),'',decode(d.ghsjlb,1,'08:00','13:00'),
@@ -612,7 +635,7 @@
 
     <!--预约取消-->
     <update id="updateGhk" parameterType="com.hospital.domain.YyghInVo">
-        UPDATE GH_MZYYK SET zt=-1 WHERE numid=#{numid} and zt=0
+        UPDATE GH_MZYYK SET zt=-1 and yylb=0 WHERE numid=#{numid} and zt=0
         <if test="numdate != null">
             AND yyrq1=to_date(#{numdate},'yyyy-MM-dd')
         </if>
@@ -626,8 +649,22 @@
     </resultMap>
     <!--号源状态数量-->
     <select id="getCount" parameterType="java.lang.String" resultMap="NumSourceVoMap">
-        select yybz,count(yybz)num from GH_YYPBMX  where PBJLXH = #{pbjlxh} AND GHSJLB=#{ampm}GROUP BY yybz
+        select yybz,count(yybz)num from GH_YYPBMX  where PBJLXH = #{pbjlxh} AND GHSJLB=#{ampm} GROUP BY yybz
     </select>
+
+    <!-- 2019-10-16门诊预约数量-->
+
+    <select id="getMzyyCount" resultType="java.lang.Integer" parameterType="java.lang.String" >
+        select count(1) from gh_mzyyk  where zt in(0,1) and pbxh = #{pbjlxh} AND yysj=#{ampm} and to_char(yyrq1,'yyyy-mm-dd')=#{appdate}
+    </select>
+
+    <select id="getMzyyList" resultType="com.hospital.out.hospital.GhkVo" parameterType="java.lang.String">
+        select yyrq1,ghxh,yysj,pbxh
+        from gh_mzyyk where pbxh = #{schid} and yysj = #{ampm}
+        and zt in (0,1) and to_char(yyrq1,'yyyy-mm-dd')=#{schdateStr}
+    </select>
+
+    <!-- 2019-10-16门诊预约数量-->
 
     <!--号源锁定-->
     <update id="lockNum" parameterType="java.lang.String">

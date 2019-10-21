@@ -24,10 +24,19 @@ public class YyghInVo {
     private String oper;        //操作员
 
     private String numdate;   //号源日期
+    private String visittime;     //就诊日期
 
 
 
     public YyghInVo() {
+    }
+
+    public String getVisittime() {
+        return visittime;
+    }
+
+    public void setVisittime(String visittime) {
+        this.visittime = visittime;
     }
 
     public int getYyxh() {

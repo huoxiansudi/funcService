@@ -10,6 +10,7 @@ public class GhkVo {
     private String  yyxh;
     private String xm;
     private String xb;
+    private String csrq;
     private String sfzh;
     private String lxdh;
     private String yyrq1;
@@ -31,9 +32,27 @@ public class GhkVo {
     private String djrq;
     private String  jkxx;
 
+    private String  yysjd;
+
     private String czgh;
 
     private String thbz;//退号标识
+
+    public String getCsrq() {
+        return csrq;
+    }
+
+    public void setCsrq(String csrq) {
+        this.csrq = csrq;
+    }
+
+    public String getYysjd() {
+        return yysjd;
+    }
+
+    public void setYysjd(String yysjd) {
+        this.yysjd = yysjd;
+    }
 
     public String getJkxx() {
         return jkxx;

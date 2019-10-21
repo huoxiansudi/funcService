@@ -165,14 +165,24 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
     @Override
     @Transactional
     public String insertMzYyk(GhkVo ghkVo) {
-
-        Integer numState = hospitalInfoDao.selectNumByPbxmxy(ghkVo.getNumid());
+        //----------2019-10-21修改已被预约的判别方式，查看gh_mzyyk表是否有记录
+        List<GhkVo> getMzyyXxList = hospitalInfoDao.getMzyyList(ghkVo.getPbxh(),ghkVo.getYysj(),ghkVo.getYyrq1());
+        if(getMzyyXxList.size()>0){
+            for (GhkVo yyVo:getMzyyXxList) {
+                if(yyVo.getGhxh().equals(ghkVo.getGhxh())){
+                    return "此序号已被预约";
+                }
+            }
+        }
+        //之前版本
+        /*Integer numState = hospitalInfoDao.selectNumByPbxmxy(ghkVo.getNumid());
         if (numState == null) {
             return "号源无效！！！";
         }
         if (numState == 1) {
             return "号源已经被锁定！！！";
-        }
+        }*/
+        //----------2019-10-21修改已被预约的判别方式，查看gh_mzyyk表是否有记录
 
         //判断取号密码是否重复
         List pass = hospitalInfoDao.getCheckID(ghkVo.getCheckid());
@@ -372,6 +382,9 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
                 if (numSourceVos == null) {
                     continue;
                 }
+
+
+
                 Integer sourceNum = 0;
                 for (NumSourceVo numSourceVotemp : numSourceVos) {
                     if ("0".equals(numSourceVotemp.getYybz())) {
@@ -389,6 +402,12 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
                     temp.setNumremain(0 + "");
                     continue;
                 }
+                //--------------------2019-10-16 添加 判断当天 gh_mzyyk 是否有数据-------------------------------
+                //通过判断那一天 gh_mzyyk 是否有数据，如果有则从排班表中删除
+                int yyyCount = hospitalInfoDao.getMzyyCount(temp.getSchid(), temp.getAmpm(),temp.getAppdate()); //已预约数
+                int kyyCount = sourceNum - yyyCount;//可预约数量
+                temp.setNumremain(kyyCount+""); //号源可预约数
+                //--------------------2019-10-16 添加 判断当天 gh_mzyyk 是否有数据-------------------------------
 
                 // -------------------2019-09-16 添加 停诊 状态信息-------------------------------
                 if (null != temp.getDocid()) {
@@ -529,10 +548,29 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
     @Override
     public List<PbHyVo> selectCurrentNum(String schid, String ampm) {
         if (StringUtils.hasText(schid) && StringUtils.hasText(ampm)) {
-            List<PbHyVo> list = hospitalInfoDao.selectCurrentNum(schid, ampm);
+
+            //--------------------2019-10-21 添加 判断gh_mzyyk和gh_ghk是否有数据-------------------------------
+            PbjlxhVo pbjlxhVo = hospitalInfoDao.getPbjlxhVo(schid); //获取排班记录
+            pbjlxhVo.setAmpm(ampm);
+
+            String currentDate = DateUtil.dateToString(new Date());
+            List<GhkVo> getMzyyXxList = hospitalInfoDao.getMzyyList(schid,ampm,currentDate);//获取当天是否有预约信息
+            List<GhkVo> getGhXxList = hospitalInfoDao.getGhxxList(pbjlxhVo);//获取当天是否有挂号信息
+            List<PbHyVo> list = hospitalInfoDao.selectCurrentNum(schid, ampm);//获取排班信息
             for (PbHyVo temp : list) {
                 temp.setNumdate(new Date());
+                for (GhkVo yyghxx : getMzyyXxList) {
+                    if(yyghxx.getGhxh().equals(temp.getNumno())){
+                        temp.setNumstate("1"); //把状态设置为1
+                    }
+                }
+                for (GhkVo ghxx : getGhXxList) {
+                    if(ghxx.getGhxh().equals(temp.getNumno())){
+                        temp.setNumstate("1"); //把状态设置为1
+                    }
+                }
             }
+            //--------------------2019-10-21 添加 判断gh_mzyyk和gh_ghk是否有数据-------------------------------
             return list;
         }
         return null;

@@ -454,6 +454,9 @@
             <if test="xb != null">
                 XB,
             </if>
+            <if test="csrq != null">
+                CSRQ,
+            </if>
             <if test="sfzh != null">
                 SFZH,
             </if>
@@ -517,6 +520,9 @@
             <if test="jkxx !=null">
                 JKXX,
             </if>
+            <if test="yysjd !=null">
+                YYSJD,
+            </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="yyxh != null">
@@ -527,6 +533,9 @@
             </if>
             <if test="xb != null">
                 #{xb},
+            </if>
+            <if test="csrq != null">
+                to_date(#{csrq},'yyyy-MM-dd'),
             </if>
             <if test="sfzh != null">
                 #{sfzh},
@@ -591,6 +600,9 @@
             </if>
             <if test="jkxx !=null">
                 #{jkxx},
+            </if>
+            <if test="yysjd !=null">
+                #{yysjd},
             </if>
         </trim>
     </insert>
@@ -665,6 +677,28 @@
     </select>
 
     <!-- 2019-10-16门诊预约数量-->
+
+    <!-- 2019-10-21当天门诊挂号数量-->
+    <select id="getPbjlxhVo" resultType="com.hospital.out.hospital.PbjlxhVo" parameterType="java.lang.String">
+        select jlxh,ksdm,mzlbxh,ysgh
+        from gh_yzpbk where jlxh = #{schid}
+    </select>
+
+    <select id="getGhxxList" resultType="com.hospital.out.hospital.GhkVo" parameterType="com.hospital.out.hospital.PbjlxhVo">
+        select ghxh
+        from Gh_Ghk where ksdm = #{ksdm} and sjlb = #{ampm} and mzlbxh=#{mzlbxh}
+        and to_char(ghrq,'yyyy-mm-dd')=to_char(sysdate,'yyyy-mm-dd') and ghxh !=0 and ghxh !=999 and thbz=0
+
+        <choose>
+            <when test="ysgh !=null and ysgh != ''">
+                and ysgh=#{ysgh}
+            </when>
+            <otherwise>
+                and ysgh is null
+            </otherwise>
+        </choose>
+    </select>
+    <!-- 2019-10-21当天门诊挂号数量-->
 
     <!--号源锁定-->
     <update id="lockNum" parameterType="java.lang.String">

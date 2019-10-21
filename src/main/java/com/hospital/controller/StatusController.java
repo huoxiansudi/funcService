@@ -208,13 +208,20 @@ public class StatusController {
                     return ResultModel.failResultModel(AppointmentCodeState.getCode("CODE_22010002"));
                 }
 
+
                 GhkVo ghkVo = new GhkVo();
+                if(patientInfo.getIdcard()!=null){
+                    ghkVo.setCsrq(IdCardExpUtil.getIdCardByBirth(patientInfo.getIdcard()));
+                }
                 //判断号源是否存在
                 NumOrigin numDo = hospitalInfoService.getDoctorPbVoByNumId(yyghInVo.getNumid());
                 if (numDo != null) {
                     ghkVo.setKsdm(numDo.getDeptCode());
                     ghkVo.setMzlbxh(numDo.getMzlbxh());
                     ghkVo.setYsgh(numDo.getDocterCode());
+                }
+                if(StringUtils.hasText(yyghInVo.getVisittime())){
+                    ghkVo.setYysjd(yyghInVo.getVisittime());
                 }
                 ghkVo.setCheckid(yyghInVo.getPass());
                 ghkVo.setGhxh(yyghInVo.getNo());

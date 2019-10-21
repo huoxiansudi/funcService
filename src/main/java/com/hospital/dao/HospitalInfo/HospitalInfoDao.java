@@ -105,4 +105,7 @@ public interface HospitalInfoDao {
     int getXwSfTz(DoctorPbVo doctorPbVo);
 
     List<GhkVo> getMzyyList(@Param(value = "schid")String schid, @Param(value = "ampm")String ampm,@Param(value = "schdateStr")String schdateStr);
+    List<GhkVo> getGhxxList(PbjlxhVo pbjlxhVo);
+
+    PbjlxhVo getPbjlxhVo(@Param(value = "schid")String schid);
 }

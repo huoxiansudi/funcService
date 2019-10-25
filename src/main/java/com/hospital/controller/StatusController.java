@@ -108,6 +108,9 @@ public class StatusController {
         String funCode = objectJson.getString("funcode");
         logger.info("访问接口:" + funCode);
         logger.info("访问参数:" + objectJson);
+
+        PatientInVo registInVo = null;
+        YyghInVo yyghInVo = null;
         switch (funCode) {
             case "100101"://接口状态监测
                 //更新web_ghksxx
@@ -138,7 +141,7 @@ public class StatusController {
                 List<PbHyVo> listPbHyVo = hospitalInfoService.getPbHyVo(schidStr, ampm,schdateStr);
                 return ResultModel.SuccessListResultModel(listPbHyVo);
             case "100206":  //患者注册
-                PatientInVo registInVo = objectJson.toJavaObject(PatientInVo.class);
+                registInVo = objectJson.toJavaObject(PatientInVo.class);
                 if (registInVo == null || !StringUtils.hasText(registInVo.getPatid()) || !StringUtils.hasText(registInVo.getPatname())
                         || !StringUtils.hasText(registInVo.getPatsex()) || !StringUtils.hasText(registInVo.getIdcard())
                         || !StringUtils.hasText(registInVo.getMobileno()) || !StringUtils.hasText(registInVo.getAddress())) {
@@ -171,27 +174,30 @@ public class StatusController {
                 PatientVo patientVo = hospitalInfoService.selectPatientByJzkh(registInVo.getPatid());
                 if (patientVo == null) {
                     //添加患者信息
-                    int temp = hospitalInfoService.insertPatient(registInVo);
+                    hospitalInfoService.insertPatient(registInVo);
                 } else {
                     return ResultModel.failResultModel("添加的患者信息已存在！");
                 }
 
                 return ResultModel.SuccessRegistResultModel(registInVo.getPatid());
             case "100207"://患者信息修改
-                PatientInVo registInVo2 = objectJson.toJavaObject(PatientInVo.class);
+                registInVo = objectJson.toJavaObject(PatientInVo.class);
                 //判断是否为空
-                if (registInVo2 == null || !StringUtils.hasText(registInVo2.getPatid()) || !StringUtils.hasText(registInVo2.getPatname())
-                        || !StringUtils.hasText(registInVo2.getPatsex()) || !StringUtils.hasText(registInVo2.getMobileno())) {
+                if (registInVo == null || !StringUtils.hasText(registInVo.getPatid()) || !StringUtils.hasText(registInVo.getPatname())
+                        || !StringUtils.hasText(registInVo.getPatsex()) || !StringUtils.hasText(registInVo.getMobileno())) {
                     return ResultModel.failResultModel("必要参数未传");
                 }
-                int temp2 = hospitalInfoService.updatePatient(registInVo2);
+                hospitalInfoService.updatePatient(registInVo);
                 return ResultModel.SuccessResultModelInfo();
             case "100208": //预约挂号
-                YyghInVo yyghInVo = objectJson.toJavaObject(YyghInVo.class);
+                yyghInVo = objectJson.toJavaObject(YyghInVo.class);
                 //判断是否为空
-                if (yyghInVo == null || !StringUtils.hasText(yyghInVo.getRegid()) || !StringUtils.hasText(yyghInVo.getNumid())
-                        || !StringUtils.hasText(yyghInVo.getPatid()) || !StringUtils.hasText(yyghInVo.getVisitdate())
-                        || !StringUtils.hasText(yyghInVo.getPass()) || !StringUtils.hasText(yyghInVo.getNo())) {
+                if (yyghInVo == null || !StringUtils.hasText(yyghInVo.getRegid()) ||
+                        !StringUtils.hasText(yyghInVo.getNumid())
+                        || !StringUtils.hasText(yyghInVo.getPatid()) || !
+                        StringUtils.hasText(yyghInVo.getVisitdate())
+                        || !StringUtils.hasText(yyghInVo.getPass()) || !
+                        StringUtils.hasText(yyghInVo.getNo())) {
                     return ResultModel.failResultModel("必要参数未传");
                 }
                 //判断是否为当天号源预约，当天的要排除
@@ -203,18 +209,22 @@ public class StatusController {
                 yyghInVo.setVisitdate(yyjzrq);
 
                 //判断用户信息是否存在
-                PatientVo patientInfo = hospitalInfoService.selectPatientByJzkh(yyghInVo.getPatid());
+                PatientVo patientInfo = hospitalInfoService.selectPatientByJzkh
+                        (yyghInVo.getPatid());
                 if (patientInfo == null || patientInfo.getPatid() == null) {
-                    return ResultModel.failResultModel(AppointmentCodeState.getCode("CODE_22010002"));
+                    return ResultModel.failResultModel(AppointmentCodeState.getCode
+                            ("CODE_22010002"));
                 }
 
 
                 GhkVo ghkVo = new GhkVo();
                 if(patientInfo.getIdcard()!=null){
-                    ghkVo.setCsrq(IdCardExpUtil.getIdCardByBirth(patientInfo.getIdcard()));
+                    ghkVo.setCsrq(IdCardExpUtil.getIdCardByBirth
+                            (patientInfo.getIdcard()));
                 }
                 //判断号源是否存在
-                NumOrigin numDo = hospitalInfoService.getDoctorPbVoByNumId(yyghInVo.getNumid());
+                NumOrigin numDo = hospitalInfoService.getDoctorPbVoByNumId
+                        (yyghInVo.getNumid());
                 if (numDo != null) {
                     ghkVo.setKsdm(numDo.getDeptCode());
                     ghkVo.setMzlbxh(numDo.getMzlbxh());
@@ -262,28 +272,27 @@ public class StatusController {
                 return ResultModel.SuccessResultModelInfo();
 
             case "100210": //号源释放
-                YyghInVo yyghInVo2 = objectJson.toJavaObject(YyghInVo.class);
+                yyghInVo = objectJson.toJavaObject(YyghInVo.class);
 
                 //判断是否为空
-                if (yyghInVo2 == null || !StringUtils.hasText(yyghInVo2.getNumid())) {
+                if (yyghInVo == null || !StringUtils.hasText(yyghInVo.getNumid())) {
                     return ResultModel.failResultModel("必要参数未传");
                 }
-                if (StringUtils.hasText(yyghInVo2.getRegid())) {
-                    Integer unlockDo = hospitalInfoService.unLockNum(yyghInVo2.getNumid());
+                if (StringUtils.hasText(yyghInVo.getRegid())) {
+                    Integer unlockDo = hospitalInfoService.unLockNum(yyghInVo.getNumid());
                     if (unlockDo > 0) {
                         return ResultModel.SuccessResultModelInfo();
                     } else {
                         ResultModel.failResultModel("号源释放失败");
                     }
                 }
-                if (yyghInVo2.getNumdate() != null) {
-                    String yyjzrq2 = DateUtil.formatToDate(yyghInVo2.getNumdate());//预约日期(YYYYMMDD)转换为（yyyy-MM-dd）
-                    yyghInVo2.setNumdate(yyjzrq2);
+                if (yyghInVo.getNumdate() != null) {
+                    yyghInVo.setNumdate(DateUtil.formatToDate(yyghInVo.getNumdate()));
                 }
 
-                int updateGhk = hospitalInfoService.updateGhk(yyghInVo2);
+                int updateGhk = hospitalInfoService.updateGhk(yyghInVo);
                 if (updateGhk > 0) {
-                    Integer unlockDo = hospitalInfoService.unLockNum(yyghInVo2.getNumid());
+                    Integer unlockDo = hospitalInfoService.unLockNum(yyghInVo.getNumid());
                     if (unlockDo > 0) {
                         return ResultModel.SuccessResultModelInfo();
                     } else {
@@ -314,13 +323,13 @@ public class StatusController {
                 }
                 return ResultModel.failResultModel("必要参数未传");
             case "100213": //查询患者信息
-                PatientInVo registInVo3 = objectJson.toJavaObject(PatientInVo.class);
+                registInVo = objectJson.toJavaObject(PatientInVo.class);
                 //判断是否为空 || (!StringUtils.hasText(registInVo3.getPatname()))
-                if (!StringUtils.hasText(registInVo3.getIdcard())) {
+                if (!StringUtils.hasText(registInVo.getIdcard())) {
                     return ResultModel.failResultModel("必要参数未传");
                 }
                 try {
-                    String result = IdCardExpUtil.IDCardValidate(registInVo3.getIdcard());
+                    String result = IdCardExpUtil.IDCardValidate(registInVo.getIdcard());
                     if (!"身份证号码正确".equals(result)){
                         return ResultModel.NullPatientModel("身份证有误");
                     }
@@ -328,7 +337,7 @@ public class StatusController {
                     e.printStackTrace();
                     return ResultModel.NullPatientModel("身份证有误");
                 }
-                List<PatientVo> patientVo2 = hospitalInfoService.selectPatient(registInVo3);
+                List<PatientVo> patientVo2 = hospitalInfoService.selectPatient(registInVo);
                 /*if (patientVo2 == null || patientVo2.isEmpty()) {
                     return ResultModel.NullPatientModel("用户不存在！！！");
                 }*/
@@ -350,6 +359,7 @@ public class StatusController {
                 return ResultModel.SuccessListResultModel(listCurrentPbHyVo);
             case "100216": //挂号(取号)预结算
                 GhInVo ghInVo = objectJson.toJavaObject(GhInVo.class);
+
                 //判断是否为空
                 if (ghInVo == null || !StringUtils.hasText(ghInVo.getNumid())
                         || !StringUtils.hasText(ghInVo.getPatid()) || !StringUtils.hasText(ghInVo.getVisitdate())

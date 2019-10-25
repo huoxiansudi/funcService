@@ -18,6 +18,7 @@ import org.springframework.util.StringUtils;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Created by fuxf on 2017/8/1.
@@ -166,10 +167,11 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
     @Transactional
     public String insertMzYyk(GhkVo ghkVo) {
         //----------2019-10-21修改已被预约的判别方式，查看gh_mzyyk表是否有记录
-        List<GhkVo> getMzyyXxList = hospitalInfoDao.getMzyyList(ghkVo.getPbxh(),ghkVo.getYysj(),ghkVo.getYyrq1());
+        List<Integer> getMzyyXxList = hospitalInfoDao.getMzyyList(ghkVo.getPbxh
+                (),ghkVo.getYysj(),ghkVo.getYyrq1());
         if(getMzyyXxList.size()>0){
-            for (GhkVo yyVo:getMzyyXxList) {
-                if(yyVo.getGhxh().equals(ghkVo.getGhxh())){
+            for (Integer ghxh:getMzyyXxList) {
+                if((ghxh+"").equals(ghkVo.getGhxh())){
                     return "此序号已被预约";
                 }
             }
@@ -521,18 +523,20 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
 
     @Override
     public List<PbHyVo> getPbHyVo(String schid, String ampm,String schdateStr) {
-        if (StringUtils.hasText(schid) && StringUtils.hasText(ampm) && StringUtils.hasText(schdateStr)) {
+        if (StringUtils.hasText(schid) && StringUtils.hasText(ampm) &&
+                StringUtils.hasText(schdateStr)) {
 
             //--------------------2019-10-16 添加 号源是30天的数据-------------------------------
 
-            //获取那天数据是否有被预约的信息 --获取到 yyrq1,ghxh,yysj,pbxh  把对应的numstate改为1
+           //获取那天数据是否有被预约的信息 --获取到 yyrq1,ghxh,yysj,pbxh  把对应的numstate改为1
             schdateStr = DateUtil.stringDateToString(schdateStr);
-            List<GhkVo> getMzyyXxList = hospitalInfoDao.getMzyyList(schid,ampm,schdateStr);
+            List<Integer> getMzyyXxList = hospitalInfoDao.getMzyyList
+                    (schid,ampm,schdateStr);
             List<PbHyVo> list = hospitalInfoDao.getPbHyVo(schid, ampm,schdateStr);
             for (PbHyVo temp : list) {
                 temp.setNumdate(DateUtil.formatStringDate(temp.getAppdate()));
-                for (GhkVo yyXx : getMzyyXxList) {
-                    if(yyXx.getGhxh().equals(temp.getNumno())){
+                for (Integer ghxh : getMzyyXxList) {
+                    if((ghxh+"").equals(temp.getNumno())){
                         temp.setNumstate("1"); //把状态设置为1
                     }
 
@@ -554,19 +558,25 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
             pbjlxhVo.setAmpm(ampm);
 
             String currentDate = DateUtil.dateToString(new Date());
-            List<GhkVo> getMzyyXxList = hospitalInfoDao.getMzyyList(schid,ampm,currentDate);//获取当天是否有预约信息
-            List<GhkVo> getGhXxList = hospitalInfoDao.getGhxxList(pbjlxhVo);//获取当天是否有挂号信息
+            List<Integer> getMzyyXxList = hospitalInfoDao.getMzyyList(schid,ampm,currentDate);//获取当天是否有预约信息
+            List<Integer> getGhXxList = hospitalInfoDao.getGhxxList(pbjlxhVo);//获取当天是否有挂号信息
+            //List<Integer> getpbxhList = hospitalInfoDao.getpbxhList(schid, ampm);//获取当天是否有挂号信息
             List<PbHyVo> list = hospitalInfoDao.selectCurrentNum(schid, ampm);//获取排班信息
-            for (PbHyVo temp : list) {
-                temp.setNumdate(new Date());
-                for (GhkVo yyghxx : getMzyyXxList) {
-                    if(yyghxx.getGhxh().equals(temp.getNumno())){
-                        temp.setNumstate("1"); //把状态设置为1
-                    }
-                }
-                for (GhkVo ghxx : getGhXxList) {
-                    if(ghxx.getGhxh().equals(temp.getNumno())){
-                        temp.setNumstate("1"); //把状态设置为1
+
+            // 并集
+            List<Integer> listAll = getMzyyXxList.parallelStream().collect(toList());
+            List<Integer> listAll2 = getGhXxList.parallelStream().collect(toList());
+            listAll.addAll(listAll2);
+            // 去重并集
+            List<Integer> listAllDistinct = listAll.stream().distinct().collect(toList());
+
+            if(listAllDistinct.size()>0){
+                for(PbHyVo temp : list){
+                    temp.setNumdate(new Date());
+                    for(Integer ghxh : listAllDistinct){
+                        if((ghxh+"").equals(temp.getNumno())){
+                            temp.setNumstate("1"); //把状态设置为1
+                        }
                     }
                 }
             }

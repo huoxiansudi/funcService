@@ -647,7 +647,7 @@
 
     <!--预约取消-->
     <update id="updateGhk" parameterType="com.hospital.domain.YyghInVo">
-        UPDATE GH_MZYYK SET zt=-1 and yylb=0 WHERE numid=#{numid} and zt=0
+        UPDATE GH_MZYYK SET zt=-1, yylb=0 WHERE numid=#{numid} and zt=0
         <if test="numdate != null">
             AND yyrq1=to_date(#{numdate},'yyyy-MM-dd')
         </if>

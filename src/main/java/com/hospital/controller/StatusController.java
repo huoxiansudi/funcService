@@ -106,8 +106,8 @@ public class StatusController {
     public ResultModel funMain(@RequestBody String jsonObject) {
         JSONObject objectJson = JSON.parseObject(jsonObject);
         String funCode = objectJson.getString("funcode");
-        logger.info("访问接口:" + funCode);
-        logger.info("访问参数:" + objectJson);
+        logger.debug("访问接口:" + funCode);
+        logger.debug("访问参数:" + objectJson);
 
         PatientInVo registInVo = null;
         YyghInVo yyghInVo = null;

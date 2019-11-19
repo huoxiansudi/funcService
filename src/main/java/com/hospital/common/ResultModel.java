@@ -48,14 +48,14 @@ public class ResultModel {
         ResultModel resultModel = new ResultModel();
         resultModel.setState("1");
         resultModel.setResult(result);
-        logger.info("返回参数:" +result !=null?result.toString():"数据为空！！!");
+        logger.debug("返回参数:" +result !=null?result.toString():"数据为空！！!");
         return resultModel;
     }
     public static ResultModel NullPatientModel(Object result) {
         ResultModel resultModel = new ResultModel();
         resultModel.setState("-1");
         resultModel.setResult(result);
-        logger.info("返回参数:" +result !=null?result.toString():"数据为空！！!");
+        logger.debug("返回参数:" +result !=null?result.toString():"数据为空！！!");
         return resultModel;
     }
 
@@ -63,7 +63,7 @@ public class ResultModel {
         ResultModel resultModel = new ResultModel();
         resultModel.setState("0");
         resultModel.setResult(result);
-        logger.info("返回参数:" + (result !=null?result.toString():"数据为空！！!"));
+        logger.debug("返回参数:" + (result !=null?result.toString():"数据为空！！!"));
         return resultModel;
     }
 
@@ -72,7 +72,7 @@ public class ResultModel {
         resultModel.setState("0");
         resultModel.setResult("操作成功");
         resultModel.setRegState(regState);
-        logger.info("返回参数:" + regState);
+        logger.debug("返回参数:" + regState);
         return resultModel;
     }
 
@@ -80,7 +80,7 @@ public class ResultModel {
         ResultModel resultModel = new ResultModel();
         resultModel.setState("0");
         resultModel.setResult("操作成功");
-        logger.info("返回参数:" + (resultModel.toString()));
+        logger.debug("返回参数:" + (resultModel.toString()));
         return resultModel;
     }
 
@@ -89,7 +89,7 @@ public class ResultModel {
         resultModel.setState("0");
         resultModel.setResult("操作成功");
         resultModel.setPatientid(patientid);
-        logger.info("返回参数:" + patientid);
+        logger.debug("返回参数:" + patientid);
         return resultModel;
     }
 
@@ -98,7 +98,7 @@ public class ResultModel {
         resultModel.setState("0");
         resultModel.setResult("操作成功");
         resultModel.setOrderid(String.valueOf(yyxh));
-        logger.info("返回参数:" +yyxh );
+        logger.debug("返回参数:" +yyxh );
         return resultModel;
     }
 
@@ -107,7 +107,7 @@ public class ResultModel {
         resultModel.setState("0");
         resultModel.setResult("操作成功");
         resultModel.setList(list);
-        logger.info("返回参数:" + (list != null?list.isEmpty()?"数据为空！！":list.toString():"数据为空"));
+        logger.debug("返回参数:" + (list != null?list.isEmpty()?"数据为空！！":list.toString():"数据为空"));
         return resultModel;
     }
 
@@ -116,7 +116,7 @@ public class ResultModel {
         resultModel.setState("0");
         resultModel.setResult("操作成功");
         resultModel.setAssay(assay);
-        logger.info("返回参数:" + (assay !=null?assay.toString():"数据为空！！"));
+        logger.debug("返回参数:" + (assay !=null?assay.toString():"数据为空！！"));
         return resultModel;
     }
 
@@ -125,7 +125,7 @@ public class ResultModel {
         resultModel.setState("0");
         resultModel.setResult("操作成功");
         resultModel.setReg(reg);
-        logger.info("返回参数:" + (reg !=null?reg.toString():"数据为空！！"));
+        logger.debug("返回参数:" + (reg !=null?reg.toString():"数据为空！！"));
         return resultModel;
     }
 
@@ -134,7 +134,7 @@ public class ResultModel {
         resultModel.setState("0");
         resultModel.setResult("操作成功");
         resultModel.setCost(cost);
-        logger.info("返回参数:" + (cost != null?cost.toString():"数据为空！！"));
+        logger.debug("返回参数:" + (cost != null?cost.toString():"数据为空！！"));
         return resultModel;
     }
 
@@ -143,7 +143,7 @@ public class ResultModel {
         resultModel.setState("0");
         resultModel.setResult("操作成功");
         resultModel.setObj(obj);
-        logger.info("返回参数:" + (obj !=null?obj.toString():"数据为空！！!"));
+        logger.debug("返回参数:" + (obj !=null?obj.toString():"数据为空！！!"));
         return resultModel;
     }
     public static ResultModel SuccessOneResultModel(TotalCostInventoryVo obj) {
@@ -151,7 +151,7 @@ public class ResultModel {
         resultModel.setState("0");
         resultModel.setResult("操作成功");
         resultModel.setOneMainCost(obj);
-        logger.info("返回参数:" + (obj !=null?obj.toString():"数据为空！！!"));
+        logger.debug("返回参数:" + (obj !=null?obj.toString():"数据为空！！!"));
         return resultModel;
     }
     public static ResultModel SuccessPayDetaileList(PayDetaileList obj) {
@@ -159,7 +159,7 @@ public class ResultModel {
         resultModel.setState("0");
         resultModel.setResult("操作成功");
         resultModel.setPayDetaileList(obj);
-        logger.info("返回参数:" + (obj !=null?obj.toString():"数据为空！！!"));
+        logger.debug("返回参数:" + (obj !=null?obj.toString():"数据为空！！!"));
         return resultModel;
     }
     public static ResultModel SuccessVisitNo(String visitNo) {
@@ -167,7 +167,7 @@ public class ResultModel {
         resultModel.setState("0");
         resultModel.setResult("操作成功");
         resultModel.setVisitNo(visitNo);
-        logger.info("返回参数:" + (visitNo !=null?visitNo:"数据为空！！!"));
+        logger.debug("返回参数:" + (visitNo !=null?visitNo:"数据为空！！!"));
         return resultModel;
     }
     public static ResultModel SuccessInvoicenumber(String invoicenumber) {
@@ -175,7 +175,7 @@ public class ResultModel {
         resultModel.setState("0");
         resultModel.setResult("操作成功");
         resultModel.setInvoicenumber(invoicenumber);
-        logger.info("返回参数:" + (invoicenumber !=null?invoicenumber:"数据为空！！!"));
+        logger.debug("返回参数:" + (invoicenumber !=null?invoicenumber:"数据为空！！!"));
         return resultModel;
     }
 

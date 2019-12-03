@@ -670,7 +670,7 @@
         select count(1) from gh_mzyyk  where zt in(0,1) and pbxh = #{pbjlxh} AND yysj=#{ampm} and to_char(yyrq1,'yyyy-mm-dd')=#{appdate}
     </select>
 
-    <select id="getMzyyList" resultType="java.lang.Integer" parameterType="java.lang.String">
+    <select id="getMzyyList" resultType="java.lang.String" parameterType="java.lang.String">
         select ghxh
         from gh_mzyyk where pbxh = #{schid} and yysj = #{ampm}
         and zt in (0,1) and to_char(yyrq1,'yyyy-mm-dd')=#{schdateStr}
@@ -684,10 +684,10 @@
         from gh_yzpbk where jlxh = #{schid}
     </select>
 
-    <select id="getGhxxList" resultType="java.lang.Integer" parameterType="com.hospital.out.hospital.PbjlxhVo">
+    <select id="getGhxxList" resultType="java.lang.String" parameterType="com.hospital.out.hospital.PbjlxhVo">
         select ghxh
         from Gh_Ghk where ksdm = #{ksdm} and sjlb = #{ampm} and mzlbxh=#{mzlbxh}
-        and to_char(ghrq,'yyyy-mm-dd')=to_char(sysdate,'yyyy-mm-dd') and ghxh !=0 and ghxh !=999 and thbz=0
+        and to_char(ghrq,'yyyy-mm-dd')=to_char(sysdate,'yyyy-mm-dd') and thbz=0
 
         <choose>
             <when test="ysgh !=null and ysgh != ''">

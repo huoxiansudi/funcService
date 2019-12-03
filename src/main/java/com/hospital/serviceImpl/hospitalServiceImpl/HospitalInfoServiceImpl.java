@@ -167,11 +167,11 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
     @Transactional
     public String insertMzYyk(GhkVo ghkVo) {
         //----------2019-10-21修改已被预约的判别方式，查看gh_mzyyk表是否有记录
-        List<Integer> getMzyyXxList = hospitalInfoDao.getMzyyList(ghkVo.getPbxh
+        List<String> getMzyyXxList = hospitalInfoDao.getMzyyList(ghkVo.getPbxh
                 (),ghkVo.getYysj(),ghkVo.getYyrq1());
         if(getMzyyXxList.size()>0){
-            for (Integer ghxh:getMzyyXxList) {
-                if((ghxh+"").equals(ghkVo.getGhxh())){
+            for (String ghxh:getMzyyXxList) {
+                if((ghxh).equals(ghkVo.getGhxh())){
                     return "此序号已被预约";
                 }
             }
@@ -527,22 +527,17 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
                 StringUtils.hasText(schdateStr)) {
 
             //--------------------2019-10-16 添加 号源是30天的数据-------------------------------
-
            //获取那天数据是否有被预约的信息 --获取到 yyrq1,ghxh,yysj,pbxh  把对应的numstate改为1
             schdateStr = DateUtil.stringDateToString(schdateStr);
-            List<Integer> getMzyyXxList = hospitalInfoDao.getMzyyList
+            List<String> getMzyyXxList = hospitalInfoDao.getMzyyList
                     (schid,ampm,schdateStr);
             List<PbHyVo> list = hospitalInfoDao.getPbHyVo(schid, ampm,schdateStr);
             for (PbHyVo temp : list) {
                 temp.setNumdate(DateUtil.formatStringDate(temp.getAppdate()));
-                for (Integer ghxh : getMzyyXxList) {
-                    if((ghxh+"").equals(temp.getNumno())){
-                        temp.setNumstate("1"); //把状态设置为1
-                    }
-
+                if(getMzyyXxList.contains(temp.getNumno())){
+                    temp.setNumstate("1"); //把状态设置为1
                 }
             }
-
             //--------------------2019-10-16 添加 号源是30天的数据-------------------------------
             return list;
         }
@@ -558,25 +553,23 @@ public class HospitalInfoServiceImpl implements HospitalInfoService {
             pbjlxhVo.setAmpm(ampm);
 
             String currentDate = DateUtil.dateToString(new Date());
-            List<Integer> getMzyyXxList = hospitalInfoDao.getMzyyList(schid,ampm,currentDate);//获取当天是否有预约信息
-            List<Integer> getGhXxList = hospitalInfoDao.getGhxxList(pbjlxhVo);//获取当天是否有挂号信息
+            List<String> getMzyyXxList = hospitalInfoDao.getMzyyList(schid,ampm,currentDate);//获取当天是否有预约信息
+            List<String> getGhXxList = hospitalInfoDao.getGhxxList(pbjlxhVo);//获取当天是否有挂号信息
             //List<Integer> getpbxhList = hospitalInfoDao.getpbxhList(schid, ampm);//获取当天是否有挂号信息
             List<PbHyVo> list = hospitalInfoDao.selectCurrentNum(schid, ampm);//获取排班信息
 
             // 并集
-            List<Integer> listAll = getMzyyXxList.parallelStream().collect(toList());
-            List<Integer> listAll2 = getGhXxList.parallelStream().collect(toList());
+            List<String> listAll = getMzyyXxList.parallelStream().collect(toList());
+            List<String> listAll2 = getGhXxList.parallelStream().collect(toList());
             listAll.addAll(listAll2);
             // 去重并集
-            List<Integer> listAllDistinct = listAll.stream().distinct().collect(toList());
+            List<String> listAllDistinct = listAll.stream().distinct().collect(toList());
 
             if(listAllDistinct.size()>0){
                 for(PbHyVo temp : list){
                     temp.setNumdate(new Date());
-                    for(Integer ghxh : listAllDistinct){
-                        if((ghxh+"").equals(temp.getNumno())){
-                            temp.setNumstate("1"); //把状态设置为1
-                        }
+                    if(listAllDistinct.contains(temp.getNumno())){
+                        temp.setNumstate("1"); //把状态设置为1
                     }
                 }
             }

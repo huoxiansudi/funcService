@@ -38,10 +38,9 @@
         when a.swjsh &gt;= 0 and a.xwjsh &lt; 0 then
         '2'
         end as ampm,
-
         to_char(a.KSRQ,'yyyyMMdd') ksrq,
         to_char(a.JSRQ ,'yyyyMMdd') jsrq FROM GH_MBZHGL a,gh_yzpbk b
-        where a.ksdm=b.ksdm and a.ysgh=b.ysgh and a.xq=b.xq
+        where a.ksdm=b.ksdm and a.mzlbxh=b.mzlbxh
         and a.czrq > sysdate-90 and a.ksdm=#{ksdm}
         and a.jsrq BETWEEN to_date( #{begindate},'yyyy-mm-dd hh24:mi:ss')AND to_date( #{endate},'yyyy-mm-dd hh24:mi:ss')
     </select>

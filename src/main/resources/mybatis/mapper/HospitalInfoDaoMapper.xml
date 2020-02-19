@@ -813,15 +813,13 @@
     </select>
 
     <select id="getSwSfTz" resultType="java.lang.Integer" parameterType="com.hospital.out.hospital.DoctorPbVo">
-        SELECT count(1) FROM GH_MBZHGL a,gh_yzpbk b
-         where a.ksdm=b.ksdm and a.ysgh=b.ysgh and a.xq=b.xq --and s.rq between a.ksrq and a.jsrq
-         and a.czrq > sysdate-90 and b.jlxh=#{schid} and a.ksdm=#{deptid} and a.ysgh=#{docid}
-         and  to_date(#{appdate},'yyyy-MM-dd') between a.ksrq and a.jsrq and a.swjsh &lt; 0
+
+        SELECT count(1) FROM GH_MBZHGL where ksdm=#{deptid} and czrq > sysdate-90 and ysgh=#{docid} and swjsh &lt; 0 and  ksrq &lt;= to_date(#{appdate},'yyyy-MM-dd') and  jsrq >= to_date(#{appdate},'yyyy-MM-dd')
+
     </select>
     <select id="getXwSfTz" resultType="java.lang.Integer" parameterType="com.hospital.out.hospital.DoctorPbVo">
-        SELECT count(1) FROM GH_MBZHGL a,gh_yzpbk b
-        where a.ksdm=b.ksdm and a.ysgh=b.ysgh and a.xq=b.xq --and s.rq between a.ksrq and a.jsrq
-        and a.czrq > sysdate-90 and b.jlxh=#{schid} and a.ksdm=#{deptid} and a.ysgh=#{docid}
-        and  to_date(#{appdate},'yyyy-MM-dd') between a.ksrq and a.jsrq and a.xwjsh &lt; 0
+
+        SELECT count(1) FROM GH_MBZHGL where ksdm=#{deptid}  and czrq > sysdate-90 and ysgh=#{docid} and xwjsh &lt; 0 and  ksrq &lt;= to_date(#{appdate},'yyyy-MM-dd') and  jsrq >= to_date(#{appdate},'yyyy-MM-dd')
+
     </select>
 </mapper>
